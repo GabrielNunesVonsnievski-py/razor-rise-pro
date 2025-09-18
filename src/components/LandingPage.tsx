@@ -45,7 +45,7 @@ const LandingPage = () => {
           <div className="flex items-center gap-2">
             <a href="src/img/winix.png">
               <img src="src/img/winix.png" alt="Winix" className="w-20 h-20" />
-            </a>      
+            </a>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/booking">
@@ -72,13 +72,12 @@ const LandingPage = () => {
             <span className="block text-gradient">Barbearia</span>
           </h1>
           <p className="text-xl md:text-2xl opacity-90 mb-10 max-w-3xl mx-auto">
-            Transforme sua barbearia com agendamento automático via WhatsApp, 
+            Transforme sua barbearia com agendamento automático via WhatsApp,
             sistema financeiro completo e muito mais.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="accent" size="lg" className="text-lg px-8 py-6">
-              <Calendar className="w-5 h-5" />
-              Cadastrar Agora!
+              Cadastrar-se
             </Button>
           </div>
         </div>
