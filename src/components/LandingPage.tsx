@@ -1,17 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  Scissors, 
-  Star, 
-  Clock, 
-  Smartphone,
-  TrendingUp,
-  Users,
-  MessageCircle,
-  ChevronRight 
-} from "lucide-react";
+import { Calendar, Scissors, Star, Clock, Smartphone, TrendingUp, Users, MessageCircle, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const LandingPage = () => {
@@ -53,8 +43,9 @@ const LandingPage = () => {
       <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Scissors className="w-8 h-8 text-accent" />
-            <span className="text-2xl font-bold text-gradient">BarberPro</span>
+            <a href="src/img/winix.png">
+              <img src="src/img/winix.png" alt="Winix" className="w-20 h-20" />
+            </a>      
           </div>
           <div className="flex items-center gap-4">
             <Link to="/booking">
@@ -87,13 +78,8 @@ const LandingPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="accent" size="lg" className="text-lg px-8 py-6">
               <Calendar className="w-5 h-5" />
-              Começar Agora - Grátis
+              Cadastrar Agora!
             </Button>
-            <Link to="/booking">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 text-accent-foreground border-accent-foreground hover:bg-accent-foreground hover:text-accent">
-                Ver Demonstração
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -127,50 +113,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Benefits */}
-        <section className="gradient-primary rounded-2xl p-8 md:p-16 text-primary-foreground">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Por que escolher o BarberPro?
-            </h2>
-            <p className="text-xl opacity-90">
-              Resultados comprovados em centenas de barbearias
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
-                  <ChevronRight className="w-5 h-5 text-accent-foreground" />
-                </div>
-                <p className="text-lg">{benefit}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Stats */}
-        <section>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl md:text-6xl font-bold text-accent mb-2">500+</div>
-              <p className="text-muted-foreground">Barbearias Ativas</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-6xl font-bold text-accent mb-2">50K+</div>
-              <p className="text-muted-foreground">Agendamentos/Mês</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-6xl font-bold text-accent mb-2">4.9★</div>
-              <p className="text-muted-foreground">Avaliação Média</p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-6xl font-bold text-accent mb-2">300%</div>
-              <p className="text-muted-foreground">Aumento Médio</p>
-            </div>
-          </div>
-        </section>
 
         {/* CTA */}
         <section className="text-center bg-accent/5 rounded-2xl p-8 md:p-16">
@@ -199,10 +141,10 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Scissors className="w-8 h-8 text-accent" />
-            <span className="text-2xl font-bold">BarberPro</span>
+            <span className="text-2xl font-bold">Winix</span>
           </div>
           <p className="text-primary-foreground/80">
-            © 2024 BarberPro. Transformando barbearias em todo o Brasil.
+            © 2024 Winix. Transformando barbearias em todo o Brasil.
           </p>
         </div>
       </footer>
