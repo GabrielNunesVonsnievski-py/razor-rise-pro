@@ -49,12 +49,11 @@ const LandingPage = () => {
           </div>
           <div className="flex items-center gap-4">
             <Link to="/booking">
-              <Button variant="outline">Ver Demo</Button>
+              <Button variant="outline">Agendar</Button>
             </Link>
-            <Link to="/dashboard">
-              <Button variant="hero">
-                Dashboard
-                <ChevronRight className="w-4 h-4" />
+            <Link to="/auth">
+              <Button variant="accent">
+                Entrar
               </Button>
             </Link>
           </div>
@@ -76,9 +75,11 @@ const LandingPage = () => {
             sistema financeiro completo e muito mais.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="accent" size="lg" className="text-lg px-8 py-6">
-              Cadastrar-se
-            </Button>
+            <Link to="/auth">
+              <Button variant="accent" size="lg" className="text-lg px-8 py-6">
+                Cadastrar-se
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
