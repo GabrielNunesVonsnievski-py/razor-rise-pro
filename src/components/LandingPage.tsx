@@ -43,9 +43,12 @@ const LandingPage = () => {
       <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <a href="src/img/winix.png">
-              <img src="src/img/winix.png" alt="Winix" className="w-20 h-20" />
-            </a>
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-12 h-12 gradient-accent rounded-lg flex items-center justify-center">
+                <Scissors className="w-6 h-6 text-accent-foreground" />
+              </div>
+              <span className="text-xl font-bold text-primary">Winix</span>
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/booking">
