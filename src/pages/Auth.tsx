@@ -27,8 +27,8 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect authenticated users to dashboard
-        if (session?.user) {
+        // Only redirect on SIGN_IN, not on other events like SIGN_UP
+        if (session?.user && event === 'SIGNED_IN') {
           navigate('/dashboard');
         }
       }
@@ -139,8 +139,10 @@ const Auth = () => {
       } else {
         toast({
           title: "Cadastro realizado!",
-          description: "Verifique seu email para confirmar a conta.",
+          description: "Conta criada com sucesso! Bem-vindo ao Winix.",
         });
+        // Redirect to welcome page after successful signup
+        navigate('/welcome');
       }
     } catch (error) {
       toast({
