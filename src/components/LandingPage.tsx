@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Scissors, Star, Clock, Smartphone, TrendingUp, Users, MessageCircle, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import winixLogo from "@/assets/winix-logo.png";
 
 const LandingPage = () => {
   const features = [
@@ -44,10 +45,7 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-12 h-12 gradient-accent rounded-lg flex items-center justify-center">
-                <Scissors className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <span className="text-xl font-bold text-primary">Winix</span>
+              <img src={winixLogo} alt="Winix" className="w-12 h-12" />
             </Link>
           </div>
           <div className="flex items-center gap-4">
@@ -143,7 +141,7 @@ const LandingPage = () => {
       <footer className="bg-primary text-primary-foreground py-12 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Scissors className="w-8 h-8 text-accent" />
+            <img src={winixLogo} alt="Winix" className="w-8 h-8" />
             <span className="text-2xl font-bold">Winix</span>
           </div>
           <p className="text-primary-foreground/80">

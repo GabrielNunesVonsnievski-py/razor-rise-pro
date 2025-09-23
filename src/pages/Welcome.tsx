@@ -16,6 +16,7 @@ import {
   Scissors
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import winixLogo from "@/assets/winix-logo.png";
 
 const Welcome = () => {
   const features = [
@@ -70,9 +71,7 @@ const Welcome = () => {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 gradient-accent rounded-lg flex items-center justify-center">
-                <Scissors className="w-5 h-5 text-accent-foreground" />
-              </div>
+              <img src={winixLogo} alt="Winix" className="w-10 h-10" />
               <span className="text-xl font-bold text-primary">Winix</span>
             </Link>
           </div>
