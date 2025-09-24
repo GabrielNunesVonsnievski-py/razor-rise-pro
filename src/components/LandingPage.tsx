@@ -49,9 +49,6 @@ const LandingPage = () => {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/booking">
-              <Button variant="outline">Agendar</Button>
-            </Link>
             <Link to="/auth">
               <Button variant="accent">
                 Entrar
@@ -78,7 +75,7 @@ const LandingPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth">
               <Button variant="accent" size="lg" className="text-lg px-8 py-6">
-                Cadastrar-se
+                Ver planos
               </Button>
             </Link>
           </div>
@@ -145,7 +142,7 @@ const LandingPage = () => {
             <span className="text-2xl font-bold">Winix</span>
           </div>
           <p className="text-primary-foreground/80">
-            © 2024 Winix. Transformando barbearias em todo o Brasil.
+            © 2025 Winix. Transformando barbearias em todo o Brasil.
           </p>
         </div>
       </footer>

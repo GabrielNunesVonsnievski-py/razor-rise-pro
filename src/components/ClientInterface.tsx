@@ -26,7 +26,7 @@ const ClientInterface = () => {
           </p>
           <Button variant="accent" size="lg" className="text-lg px-8">
             <Calendar className="w-5 h-5" />
-            Agendar Agora
+            Compre agora!
           </Button>
         </div>
       </section>
