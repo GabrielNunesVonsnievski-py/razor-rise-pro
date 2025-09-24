@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Scissors, TrendingUp, Users, Star, Clock } from "lucide-react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 const BarberDashboard = () => {
   const todayAppointments = [
@@ -18,24 +20,34 @@ const BarberDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Barbearia Premium</h1>
-          <p className="text-muted-foreground">Dashboard do Barbeiro</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <Calendar className="w-4 h-4" />
-            Ver Agenda
-          </Button>
-          <Button variant="hero">
-            <Scissors className="w-4 h-4" />
-            Nova Promoção
-          </Button>
-        </div>
-      </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        
+        <main className="flex-1">
+          {/* Header with Sidebar Trigger */}
+          <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="lg:hidden" />
+              <div>
+                <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Bem-vindo de volta!</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm">
+                <Calendar className="w-4 h-4" />
+                Ver Agenda
+              </Button>
+              <Button variant="hero" size="sm">
+                <Scissors className="w-4 h-4" />
+                Nova Promoção
+              </Button>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <div className="p-6 space-y-6">
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -146,7 +158,10 @@ const BarberDashboard = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
