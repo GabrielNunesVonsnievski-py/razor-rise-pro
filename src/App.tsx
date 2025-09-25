@@ -9,6 +9,11 @@ import Dashboard from "./pages/Dashboard";
 import Booking from "./pages/Booking";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
+import Appointments from "./pages/Appointments";
+import Clients from "./pages/Clients";
+import Financial from "./pages/Financial";
+import Promotions from "./pages/Promotions";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +29,11 @@ const App = () => (
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/booking" element={<Booking />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/clients" element={<Clients />} />
+          <Route path="/financial" element={<Financial />} />  
+          <Route path="/promotions" element={<Promotions />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
