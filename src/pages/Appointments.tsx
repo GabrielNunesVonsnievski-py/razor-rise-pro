@@ -4,8 +4,24 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, Phone, Plus } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Appointments = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newAppointment, setNewAppointment] = useState({
+    client: "",
+    phone: "",
+    time: "",
+    service: "",
+    date: "",
+  });
+  const { toast } = useToast();
+
   const appointments = [
     { 
       id: 1, 
@@ -45,6 +61,31 @@ const Appointments = () => {
     },
   ];
 
+  const handleCreateAppointment = () => {
+    if (!newAppointment.client || !newAppointment.phone || !newAppointment.time || !newAppointment.service || !newAppointment.date) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Agendamento criado",
+      description: `Agendamento para ${newAppointment.client} criado com sucesso!`,
+    });
+
+    setNewAppointment({
+      client: "",
+      phone: "",
+      time: "",
+      service: "",
+      date: "",
+    });
+    setIsDialogOpen(false);
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -59,10 +100,79 @@ const Appointments = () => {
                 <p className="text-sm text-muted-foreground">Gerencie seus horários</p>
               </div>
             </div>
-            <Button variant="hero">
-              <Plus className="w-4 h-4" />
-              Novo Agendamento
-            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="hero">
+                  <Plus className="w-4 h-4" />
+                  Novo Agendamento
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Novo Agendamento</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="client">Nome do Cliente</Label>
+                    <Input
+                      id="client"
+                      value={newAppointment.client}
+                      onChange={(e) => setNewAppointment({...newAppointment, client: e.target.value})}
+                      placeholder="Digite o nome do cliente"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Telefone</Label>
+                    <Input
+                      id="phone"
+                      value={newAppointment.phone}
+                      onChange={(e) => setNewAppointment({...newAppointment, phone: e.target.value})}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="date">Data</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={newAppointment.date}
+                      onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="time">Horário</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={newAppointment.time}
+                      onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="service">Serviço</Label>
+                    <Select value={newAppointment.service} onValueChange={(value) => setNewAppointment({...newAppointment, service: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o serviço" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="corte">Corte</SelectItem>
+                        <SelectItem value="barba">Barba</SelectItem>
+                        <SelectItem value="corte-barba">Corte + Barba</SelectItem>
+                        <SelectItem value="corte-barba-sobrancelha">Corte + Barba + Sobrancelha</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCreateAppointment}>
+                    Criar Agendamento
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </header>
 
           <div className="p-6 space-y-6">

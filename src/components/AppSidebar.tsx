@@ -8,7 +8,7 @@ import {
   Scissors,
   LogOut
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 
 import {
   Sidebar,
@@ -25,6 +25,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -41,12 +43,31 @@ const settingsItems = [
 export function AppSidebar() {
   const { open } = useSidebar()
   const location = useLocation()
+  const navigate = useNavigate()
+  const { toast } = useToast()
   const currentPath = location.pathname
   const isCollapsed = !open
 
   const isActive = (path: string) => currentPath === path
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/10"
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      })
+      navigate("/auth")
+    } catch (error) {
+      toast({
+        title: "Erro no logout",
+        description: "Não foi possível realizar o logout.",
+        variant: "destructive",
+      })
+    }
+  }
 
   return (
     <Sidebar
@@ -109,7 +130,11 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={handleLogout}
+              >
                 <LogOut className="w-4 h-4" />
                 {!isCollapsed && <span>Sair</span>}
               </Button>
