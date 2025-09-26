@@ -41,12 +41,10 @@ const settingsItems = [
 ]
 
 export function AppSidebar() {
-  const { open } = useSidebar()
   const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
   const currentPath = location.pathname
-  const isCollapsed = !open
 
   const isActive = (path: string) => currentPath === path
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -70,35 +68,32 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar
-      className={isCollapsed ? "w-16" : "w-64"}
-      collapsible="icon"
-    >
+    <Sidebar className="w-64" collapsible="none">
       <SidebarHeader className="border-b border-border/50">
-        <div className="flex items-center gap-3 px-3 py-4">
+        <div className="flex items-center gap-3 px-4 py-6">
           <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
             <Scissors className="w-5 h-5 text-accent-foreground" />
           </div>
-          {!isCollapsed && (
-            <div>
-              <h2 className="font-bold text-lg text-primary">Winix</h2>
-              <p className="text-xs text-muted-foreground">Barbearia Premium</p>
-            </div>
-          )}
+          <div>
+            <h2 className="font-bold text-lg text-foreground">Winix</h2>
+            <p className="text-sm text-muted-foreground">Barbearia Premium</p>
+          </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Menu Principal
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavCls}>
                       <item.icon className="w-4 h-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -107,16 +102,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+        <SidebarGroup className="mt-8">
+          <SidebarGroupLabel className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Sistema
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavCls}>
                       <item.icon className="w-4 h-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -126,17 +123,17 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/50">
+      <SidebarFooter className="border-t border-border/50 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 px-3 py-2"
                 onClick={handleLogout}
               >
                 <LogOut className="w-4 h-4" />
-                {!isCollapsed && <span>Sair</span>}
+                <span>Sair</span>
               </Button>
             </SidebarMenuButton>
           </SidebarMenuItem>
