@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Scissors, TrendingUp, Users, Star, Clock } from "lucide-react";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 
 const BarberDashboard = () => {
@@ -25,11 +25,14 @@ const BarberDashboard = () => {
         <AppSidebar />
         
         <main className="flex-1">
-          {/* Header */}
+          {/* Header with Sidebar Trigger */}
           <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-            <div>
-              <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Bem-vindo de volta!</p>
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="lg:hidden" />
+              <div>
+                <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Bem-vindo de volta!</p>
+              </div>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" size="sm">
