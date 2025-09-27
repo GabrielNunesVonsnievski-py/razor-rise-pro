@@ -1,16 +1,29 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, Phone, Plus } from "lucide-react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client"; // 👈 importa o cliente supabase
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+import { Calendar, Clock, User, Phone, Plus } from "lucide-react";
+
+interface Appointment {
+  id: number;
+  client: string;
+  phone: string;
+  time: string;
+  service: string;
+  date: string;
+  status: "pending" | "confirmed";
+  user_id: string;
+}
 
 const Appointments = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -21,13 +34,29 @@ const Appointments = () => {
     service: "",
     date: "",
   });
-  const [appointments, setAppointments] = useState<any[]>([]); // lista dinâmica
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
   const { toast } = useToast();
 
-  // carregar agendamentos existentes ao montar
+  // Pega usuário logado
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) setUserId(data.user.id);
+    };
+    fetchUser();
+  }, []);
+
+  // Buscar agendamentos do usuário logado
   useEffect(() => {
     const fetchAppointments = async () => {
-      const { data, error } = await supabase.from("appointments").select("*").order("date");
+      if (!userId) return;
+      const { data, error } = await supabase
+        .from<Appointment>("appointments")
+        .select("*")
+        .eq("user_id", userId)
+        .order("date");
       if (error) {
         console.error(error);
         toast({
@@ -40,16 +69,13 @@ const Appointments = () => {
       }
     };
     fetchAppointments();
-  }, []);
+  }, [userId]);
 
+  // Criar novo agendamento
   const handleCreateAppointment = async () => {
-    if (
-      !newAppointment.client ||
-      !newAppointment.phone ||
-      !newAppointment.time ||
-      !newAppointment.service ||
-      !newAppointment.date
-    ) {
+    if (!userId) return;
+
+    if (!newAppointment.client || !newAppointment.phone || !newAppointment.time || !newAppointment.service || !newAppointment.date) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos.",
@@ -58,48 +84,25 @@ const Appointments = () => {
       return;
     }
 
-    // inserir no supabase
     const { data, error } = await supabase
       .from("appointments")
-      .insert([
-        {
-          client: newAppointment.client,
-          phone: newAppointment.phone,
-          time: newAppointment.time,
-          service: newAppointment.service,
-          date: newAppointment.date,
-          status: "pending",
-        },
-      ])
-      .select(); // retorna a linha criada
+      .insert([{ ...newAppointment, status: "pending", user_id: userId }])
+      .select();
 
     if (error) {
       console.error(error);
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
       return;
     }
 
-    // atualiza lista local
-    if (data && data.length > 0) {
-      setAppointments((prev) => [...prev, data[0]]);
-    }
+    if (data && data.length > 0) setAppointments((prev) => [...prev, data[0]]);
 
     toast({
       title: "Agendamento criado",
       description: `Agendamento para ${newAppointment.client} criado com sucesso!`,
     });
 
-    setNewAppointment({
-      client: "",
-      phone: "",
-      time: "",
-      service: "",
-      date: "",
-    });
+    setNewAppointment({ client: "", phone: "", time: "", service: "", date: "" });
     setIsDialogOpen(false);
   };
 
@@ -107,9 +110,8 @@ const Appointments = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-
         <main className="flex-1">
-          <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+          <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="lg:hidden" />
               <div>
@@ -134,9 +136,7 @@ const Appointments = () => {
                     <Input
                       id="client"
                       value={newAppointment.client}
-                      onChange={(e) =>
-                        setNewAppointment({ ...newAppointment, client: e.target.value })
-                      }
+                      onChange={(e) => setNewAppointment({ ...newAppointment, client: e.target.value })}
                       placeholder="Digite o nome do cliente"
                     />
                   </div>
@@ -145,9 +145,7 @@ const Appointments = () => {
                     <Input
                       id="phone"
                       value={newAppointment.phone}
-                      onChange={(e) =>
-                        setNewAppointment({ ...newAppointment, phone: e.target.value })
-                      }
+                      onChange={(e) => setNewAppointment({ ...newAppointment, phone: e.target.value })}
                       placeholder="(11) 99999-9999"
                     />
                   </div>
@@ -157,9 +155,7 @@ const Appointments = () => {
                       id="date"
                       type="date"
                       value={newAppointment.date}
-                      onChange={(e) =>
-                        setNewAppointment({ ...newAppointment, date: e.target.value })
-                      }
+                      onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -168,18 +164,14 @@ const Appointments = () => {
                       id="time"
                       type="time"
                       value={newAppointment.time}
-                      onChange={(e) =>
-                        setNewAppointment({ ...newAppointment, time: e.target.value })
-                      }
+                      onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="service">Serviço</Label>
                     <Select
                       value={newAppointment.service}
-                      onValueChange={(value) =>
-                        setNewAppointment({ ...newAppointment, service: value })
-                      }
+                      onValueChange={(value) => setNewAppointment({ ...newAppointment, service: value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o serviço" />
@@ -188,17 +180,13 @@ const Appointments = () => {
                         <SelectItem value="corte">Corte</SelectItem>
                         <SelectItem value="barba">Barba</SelectItem>
                         <SelectItem value="corte-barba">Corte + Barba</SelectItem>
-                        <SelectItem value="corte-barba-sobrancelha">
-                          Corte + Barba + Sobrancelha
-                        </SelectItem>
+                        <SelectItem value="corte-barba-sobrancelha">Corte + Barba + Sobrancelha</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancelar
-                  </Button>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                   <Button onClick={handleCreateAppointment}>Criar Agendamento</Button>
                 </div>
               </DialogContent>
@@ -206,13 +194,10 @@ const Appointments = () => {
           </header>
 
           <div className="p-6 space-y-6">
-            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="shadow-elegant">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Hoje
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Hoje</CardTitle>
                   <Calendar className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
@@ -220,11 +205,8 @@ const Appointments = () => {
                   <p className="text-xs text-accent font-medium">agendamentos</p>
                 </CardContent>
               </Card>
-
-              {/* ... demais cards */}
             </div>
 
-            {/* Appointments List */}
             <Card className="shadow-elegant">
               <CardHeader>
                 <CardTitle>Próximos Agendamentos</CardTitle>
@@ -251,9 +233,7 @@ const Appointments = () => {
                     <div className="text-right">
                       <p className="font-medium text-primary">{appointment.time}</p>
                       <p className="text-sm text-muted-foreground">{appointment.date}</p>
-                      <Badge
-                        variant={appointment.status === "confirmed" ? "default" : "secondary"}
-                      >
+                      <Badge variant={appointment.status === "confirmed" ? "default" : "secondary"}>
                         {appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
                       </Badge>
                     </div>

@@ -97,7 +97,7 @@ export function AppSidebar() {
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
+                    <NavLink to={item.url}>
                       <item.icon className="w-4 h-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -115,7 +115,7 @@ export function AppSidebar() {
               {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
+                    <NavLink to={item.url}>
                       <item.icon className="w-4 h-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
