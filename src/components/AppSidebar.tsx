@@ -9,7 +9,7 @@ import {
   LogOut
 } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
-
+import winixLogo from "@/assets/winix-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
 const mainItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Dashboard", url: "/dashboard", icon: Home},
   { title: "Agendamentos", url: "/appointments", icon: Calendar },
   { title: "Clientes", url: "/clients", icon: Users },
   { title: "Financeiro", url: "/financial", icon: TrendingUp },
@@ -79,6 +79,7 @@ export function AppSidebar() {
           <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
             <Scissors className="w-5 h-5 text-accent-foreground" />
           </div>
+          <img src={winixLogo} alt="Winix" className="w-12 h-12" />
           {!isCollapsed && (
             <div>
               <h2 className="font-bold text-lg text-primary">Winix</h2>

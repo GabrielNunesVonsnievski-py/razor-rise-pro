@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client"; // 👈 importa o cliente supabase
 
 const Appointments = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -20,55 +21,71 @@ const Appointments = () => {
     service: "",
     date: "",
   });
+  const [appointments, setAppointments] = useState<any[]>([]); // lista dinâmica
   const { toast } = useToast();
 
-  const appointments = [
-    { 
-      id: 1, 
-      client: "João Silva", 
-      phone: "(11) 99999-9999",
-      time: "09:00", 
-      service: "Corte + Barba", 
-      status: "confirmed",
-      date: "2024-01-15"
-    },
-    { 
-      id: 2, 
-      client: "Pedro Santos", 
-      phone: "(11) 88888-8888",
-      time: "10:30", 
-      service: "Corte", 
-      status: "confirmed",
-      date: "2024-01-15"
-    },
-    { 
-      id: 3, 
-      client: "Carlos Lima", 
-      phone: "(11) 77777-7777",
-      time: "14:00", 
-      service: "Barba", 
-      status: "pending",
-      date: "2024-01-15"
-    },
-    { 
-      id: 4, 
-      client: "Roberto Costa", 
-      phone: "(11) 66666-6666",
-      time: "16:30", 
-      service: "Corte + Barba + Sobrancelha", 
-      status: "confirmed",
-      date: "2024-01-16"
-    },
-  ];
+  // carregar agendamentos existentes ao montar
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const { data, error } = await supabase.from("appointments").select("*").order("date");
+      if (error) {
+        console.error(error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os agendamentos.",
+          variant: "destructive",
+        });
+      } else {
+        setAppointments(data || []);
+      }
+    };
+    fetchAppointments();
+  }, []);
 
-  const handleCreateAppointment = () => {
-    if (!newAppointment.client || !newAppointment.phone || !newAppointment.time || !newAppointment.service || !newAppointment.date) {
+  const handleCreateAppointment = async () => {
+    if (
+      !newAppointment.client ||
+      !newAppointment.phone ||
+      !newAppointment.time ||
+      !newAppointment.service ||
+      !newAppointment.date
+    ) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos.",
         variant: "destructive",
       });
       return;
+    }
+
+    // inserir no supabase
+    const { data, error } = await supabase
+      .from("appointments")
+      .insert([
+        {
+          client: newAppointment.client,
+          phone: newAppointment.phone,
+          time: newAppointment.time,
+          service: newAppointment.service,
+          date: newAppointment.date,
+          status: "pending",
+        },
+      ])
+      .select(); // retorna a linha criada
+
+    if (error) {
+      console.error(error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // atualiza lista local
+    if (data && data.length > 0) {
+      setAppointments((prev) => [...prev, data[0]]);
     }
 
     toast({
@@ -90,7 +107,7 @@ const Appointments = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        
+
         <main className="flex-1">
           <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
             <div className="flex items-center gap-4">
@@ -117,7 +134,9 @@ const Appointments = () => {
                     <Input
                       id="client"
                       value={newAppointment.client}
-                      onChange={(e) => setNewAppointment({...newAppointment, client: e.target.value})}
+                      onChange={(e) =>
+                        setNewAppointment({ ...newAppointment, client: e.target.value })
+                      }
                       placeholder="Digite o nome do cliente"
                     />
                   </div>
@@ -126,7 +145,9 @@ const Appointments = () => {
                     <Input
                       id="phone"
                       value={newAppointment.phone}
-                      onChange={(e) => setNewAppointment({...newAppointment, phone: e.target.value})}
+                      onChange={(e) =>
+                        setNewAppointment({ ...newAppointment, phone: e.target.value })
+                      }
                       placeholder="(11) 99999-9999"
                     />
                   </div>
@@ -136,7 +157,9 @@ const Appointments = () => {
                       id="date"
                       type="date"
                       value={newAppointment.date}
-                      onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})}
+                      onChange={(e) =>
+                        setNewAppointment({ ...newAppointment, date: e.target.value })
+                      }
                     />
                   </div>
                   <div className="grid gap-2">
@@ -145,12 +168,19 @@ const Appointments = () => {
                       id="time"
                       type="time"
                       value={newAppointment.time}
-                      onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
+                      onChange={(e) =>
+                        setNewAppointment({ ...newAppointment, time: e.target.value })
+                      }
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="service">Serviço</Label>
-                    <Select value={newAppointment.service} onValueChange={(value) => setNewAppointment({...newAppointment, service: value})}>
+                    <Select
+                      value={newAppointment.service}
+                      onValueChange={(value) =>
+                        setNewAppointment({ ...newAppointment, service: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o serviço" />
                       </SelectTrigger>
@@ -158,7 +188,9 @@ const Appointments = () => {
                         <SelectItem value="corte">Corte</SelectItem>
                         <SelectItem value="barba">Barba</SelectItem>
                         <SelectItem value="corte-barba">Corte + Barba</SelectItem>
-                        <SelectItem value="corte-barba-sobrancelha">Corte + Barba + Sobrancelha</SelectItem>
+                        <SelectItem value="corte-barba-sobrancelha">
+                          Corte + Barba + Sobrancelha
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -167,9 +199,7 @@ const Appointments = () => {
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleCreateAppointment}>
-                    Criar Agendamento
-                  </Button>
+                  <Button onClick={handleCreateAppointment}>Criar Agendamento</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -186,36 +216,12 @@ const Appointments = () => {
                   <Calendar className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">8</div>
+                  <div className="text-2xl font-bold text-primary">{appointments.length}</div>
                   <p className="text-xs text-accent font-medium">agendamentos</p>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Amanhã
-                  </CardTitle>
-                  <Clock className="h-4 w-4 text-accent" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">12</div>
-                  <p className="text-xs text-accent font-medium">agendamentos</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Pendentes
-                  </CardTitle>
-                  <User className="h-4 w-4 text-accent" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">3</div>
-                  <p className="text-xs text-accent font-medium">confirmações</p>
-                </CardContent>
-              </Card>
+              {/* ... demais cards */}
             </div>
 
             {/* Appointments List */}
@@ -245,8 +251,10 @@ const Appointments = () => {
                     <div className="text-right">
                       <p className="font-medium text-primary">{appointment.time}</p>
                       <p className="text-sm text-muted-foreground">{appointment.date}</p>
-                      <Badge variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}>
-                        {appointment.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                      <Badge
+                        variant={appointment.status === "confirmed" ? "default" : "secondary"}
+                      >
+                        {appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
                       </Badge>
                     </div>
                   </div>
