@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar, Clock, User, Phone, Plus } from "lucide-react";
 
 interface Appointment {
-  id: number;
+  id: string;
   client: string;
   phone: string;
   time: string;
@@ -23,6 +23,7 @@ interface Appointment {
   date: string;
   status: "pending" | "confirmed";
   user_id: string;
+  created_at?: string;
 }
 
 const Appointments = () => {
@@ -53,7 +54,7 @@ const Appointments = () => {
     const fetchAppointments = async () => {
       if (!userId) return;
       const { data, error } = await supabase
-        .from<Appointment>("appointments")
+        .from("appointments")
         .select("*")
         .eq("user_id", userId)
         .order("date");
@@ -65,7 +66,7 @@ const Appointments = () => {
           variant: "destructive",
         });
       } else {
-        setAppointments(data || []);
+        setAppointments((data as Appointment[]) || []);
       }
     };
     fetchAppointments();
@@ -95,7 +96,7 @@ const Appointments = () => {
       return;
     }
 
-    if (data && data.length > 0) setAppointments((prev) => [...prev, data[0]]);
+    if (data && data.length > 0) setAppointments((prev) => [...prev, data[0] as Appointment]);
 
     toast({
       title: "Agendamento criado",
@@ -111,9 +112,8 @@ const Appointments = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1">
-          <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-40">
+          <header className="h-16 flex items-center justify-between px-6 border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-40 hidden md:flex">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="lg:hidden" />
               <div>
                 <h1 className="text-2xl font-bold text-primary">Agendamentos</h1>
                 <p className="text-sm text-muted-foreground">Gerencie seus horários</p>
@@ -126,7 +126,7 @@ const Appointments = () => {
                   Novo Agendamento
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[425px] mx-4">
                 <DialogHeader>
                   <DialogTitle>Novo Agendamento</DialogTitle>
                 </DialogHeader>
@@ -193,15 +193,98 @@ const Appointments = () => {
             </Dialog>
           </header>
 
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Mobile Header */}
+          <div className="md:hidden h-14 flex items-center justify-between px-4 border-b border-border/50 bg-background/95 backdrop-blur sticky top-0 z-40">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="mobile-sidebar-trigger">
+                <Calendar className="w-5 h-5" />
+              </SidebarTrigger>
+              <div>
+                <h1 className="text-lg font-bold text-primary">Agendamentos</h1>
+              </div>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="hero" size="sm">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] mx-4">
+                <DialogHeader>
+                  <DialogTitle>Novo Agendamento</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="client-mobile">Nome do Cliente</Label>
+                    <Input
+                      id="client-mobile"
+                      value={newAppointment.client}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, client: e.target.value })}
+                      placeholder="Digite o nome do cliente"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone-mobile">Telefone</Label>
+                    <Input
+                      id="phone-mobile"
+                      value={newAppointment.phone}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, phone: e.target.value })}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="date-mobile">Data</Label>
+                    <Input
+                      id="date-mobile"
+                      type="date"
+                      value={newAppointment.date}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="time-mobile">Horário</Label>
+                    <Input
+                      id="time-mobile"
+                      type="time"
+                      value={newAppointment.time}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="service-mobile">Serviço</Label>
+                    <Select
+                      value={newAppointment.service}
+                      onValueChange={(value) => setNewAppointment({ ...newAppointment, service: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o serviço" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="corte">Corte</SelectItem>
+                        <SelectItem value="barba">Barba</SelectItem>
+                        <SelectItem value="corte-barba">Corte + Barba</SelectItem>
+                        <SelectItem value="corte-barba-sobrancelha">Corte + Barba + Sobrancelha</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleCreateAppointment}>Criar Agendamento</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               <Card className="shadow-elegant">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Hoje</CardTitle>
-                  <Calendar className="h-4 w-4 text-accent" />
+                  <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Hoje</CardTitle>
+                  <Calendar className="h-3 w-3 md:h-4 md:w-4 text-accent" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">{appointments.length}</div>
+                <CardContent className="p-3 pt-0">
+                  <div className="text-lg md:text-2xl font-bold text-primary">{appointments.length}</div>
                   <p className="text-xs text-accent font-medium">agendamentos</p>
                 </CardContent>
               </Card>
@@ -209,33 +292,37 @@ const Appointments = () => {
 
             <Card className="shadow-elegant">
               <CardHeader>
-                <CardTitle>Próximos Agendamentos</CardTitle>
+                <CardTitle className="text-lg md:text-xl">Próximos Agendamentos</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 md:space-y-4">
                 {appointments.map((appointment) => (
                   <div
                     key={appointment.id}
-                    className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
+                    className="flex items-center justify-between p-3 md:p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-accent rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-accent-foreground" />
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-accent rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 md:w-6 md:h-6 text-accent-foreground" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-primary">{appointment.client}</h3>
-                        <p className="text-sm text-muted-foreground">{appointment.service}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <h3 className="font-medium text-primary text-sm md:text-base">{appointment.client}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">{appointment.service}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground md:hidden">
                           <Phone className="w-3 h-3" />
                           {appointment.phone}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-primary">{appointment.time}</p>
-                      <p className="text-sm text-muted-foreground">{appointment.date}</p>
-                      <Badge variant={appointment.status === "confirmed" ? "default" : "secondary"}>
+                      <p className="font-medium text-primary text-sm md:text-base">{appointment.time}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">{appointment.date}</p>
+                      <Badge variant={appointment.status === "confirmed" ? "default" : "secondary"} className="text-xs">
                         {appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
                       </Badge>
+                      <div className="items-center gap-2 text-xs text-muted-foreground hidden md:flex">
+                        <Phone className="w-3 h-3" />
+                        {appointment.phone}
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -8,13 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, User as UserIcon, Phone } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
+import InputMask from "react-input-mask";
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -120,6 +123,24 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!fullName.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Por favor, informe seu nome completo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!phone.trim()) {
+      toast({
+        title: "Telefone obrigatório",
+        description: "Por favor, informe seu telefone.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (password !== confirmPassword) {
       toast({
         title: "Erro",
@@ -141,13 +162,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+            phone: phone
+          }
         }
       });
 
@@ -304,6 +329,46 @@ const Auth = () => {
                   </div>
 
                   <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Nome Completo</Label>
+                      <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                        <Input
+                          id="fullName"
+                          type="text"
+                          placeholder="Digite seu nome completo"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="pl-10"
+                          required
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefone</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+                        <InputMask
+                          mask="(99) 99999-9999"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          disabled={loading}
+                        >
+                          {(inputProps: any) => (
+                            <Input
+                              {...inputProps}
+                              id="phone"
+                              placeholder="(11) 99999-9999"
+                              className="pl-10"
+                              required
+                            />
+                          )}
+                        </InputMask>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
                       <Input
