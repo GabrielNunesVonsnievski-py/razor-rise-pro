@@ -31,8 +31,8 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Only redirect on SIGN_IN, not on other events like SIGN_UP
-        if (session?.user && event === 'SIGNED_IN') {
+        // Redirect to dashboard when user is authenticated
+        if (session?.user) {
           navigate('/dashboard');
         }
       }

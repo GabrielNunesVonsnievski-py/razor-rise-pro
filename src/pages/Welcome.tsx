@@ -85,7 +85,7 @@ const Welcome = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="gradient-hero text-accent-foreground py-16 px-6">
+      <section className="bg-gradient-hero text-accent-foreground py-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <Badge className="mb-6 bg-accent-foreground text-accent">
             ✨ Bem-vindo ao Winix!
@@ -129,7 +129,7 @@ const Welcome = () => {
               <Card key={index} className="shadow-elegant hover:shadow-glow transition-all duration-300 group relative overflow-hidden">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 gradient-accent rounded-lg flex items-center justify-center group-hover:shadow-glow transition-all">
+                    <div className="w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center group-hover:shadow-glow transition-all">
                       <feature.icon className="w-6 h-6 text-accent-foreground" />
                     </div>
                     <Badge 
