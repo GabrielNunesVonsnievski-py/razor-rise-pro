@@ -59,7 +59,7 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="gradient-hero text-accent-foreground py-20 px-6">
+      <section className="bg-gradient-hero text-accent-foreground py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <Badge className="mb-6 bg-accent-foreground text-accent">
             🚀 Lançamento Especial - 50% OFF
@@ -98,7 +98,7 @@ const LandingPage = () => {
             {features.map((feature, index) => (
               <Card key={index} className="shadow-elegant hover:shadow-glow transition-all duration-300 group">
                 <CardHeader>
-                  <div className="w-12 h-12 gradient-accent rounded-lg flex items-center justify-center mb-4 group-hover:shadow-glow transition-all">
+                  <div className="w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4 group-hover:shadow-glow transition-all">
                     <feature.icon className="w-6 h-6 text-accent-foreground" />
                   </div>
                   <CardTitle className="text-xl text-primary">{feature.title}</CardTitle>
