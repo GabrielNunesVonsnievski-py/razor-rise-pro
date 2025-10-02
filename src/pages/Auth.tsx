@@ -31,8 +31,11 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect to dashboard when user is authenticated
-        if (session?.user) {
+        // Sync profile on auth state change (login via Google, etc)
+        if (session?.user && event === 'SIGNED_IN') {
+          setTimeout(() => {
+            supabase.rpc('sync_user_profile', { user_id_param: session.user.id });
+          }, 0);
           navigate('/dashboard');
         }
       }
@@ -56,7 +59,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -76,6 +79,11 @@ const Auth = () => {
           });
         }
       } else {
+        // Sync user profile to database
+        if (data.user) {
+          await supabase.rpc('sync_user_profile', { user_id_param: data.user.id });
+        }
+        
         toast({
           title: "Login realizado!",
           description: "Bem-vindo de volta!",
