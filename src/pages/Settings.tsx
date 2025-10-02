@@ -7,8 +7,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { Settings, User, Bell, Clock, Palette, Shield } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const SettingsPage = () => {
+  const { canAccessSettings, loading } = useUserRole();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !canAccessSettings) {
+      navigate('/dashboard');
+    }
+  }, [canAccessSettings, loading, navigate]);
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full items-center justify-center">
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  if (!canAccessSettings) {
+    return null;
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
