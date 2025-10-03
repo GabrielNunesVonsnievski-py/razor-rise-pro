@@ -1,57 +1,82 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Calendar, CreditCard, Banknote } from "lucide-react";
+import { TrendingUp, DollarSign, Calendar, CreditCard, Banknote } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useBarbershop } from "@/hooks/useBarbershop";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface FinancialRecord {
+  id: number;
+  tipo: string;
+  descricao: string | null;
+  valor: number;
+  metodo_pagamento: string | null;
+  data_registro: string;
+  appointment_id: string | null;
+}
 
 const Financial = () => {
-  const transactions = [
-    { 
-      id: 1, 
-      client: "João Silva", 
-      service: "Corte + Barba",
-      value: 45.00,
-      paymentMethod: "Cartão",
-      date: "2024-01-15",
-      status: "pago"
-    },
-    { 
-      id: 2, 
-      client: "Pedro Santos", 
-      service: "Corte",
-      value: 25.00,
-      paymentMethod: "Dinheiro",
-      date: "2024-01-15",
-      status: "pago"
-    },
-    { 
-      id: 3, 
-      client: "Carlos Lima", 
-      service: "Barba",
-      value: 20.00,
-      paymentMethod: "PIX",
-      date: "2024-01-14",
-      status: "pendente"
-    },
-    { 
-      id: 4, 
-      client: "Roberto Costa", 
-      service: "Pacote Noivo",
-      value: 80.00,
-      paymentMethod: "Cartão",
-      date: "2024-01-14",
-      status: "pago"
-    },
-  ];
+  const { toast } = useToast();
+  const { barbershop } = useBarbershop();
+  const [records, setRecords] = useState<FinancialRecord[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const totalReceived = transactions
-    .filter(t => t.status === 'pago')
-    .reduce((sum, t) => sum + t.value, 0);
+  useEffect(() => {
+    if (barbershop) {
+      fetchRecords();
+    }
+  }, [barbershop]);
 
-  const totalPending = transactions
-    .filter(t => t.status === 'pendente')
-    .reduce((sum, t) => sum + t.value, 0);
+  const fetchRecords = async () => {
+    if (!barbershop) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('financial_records')
+        .select('*')
+        .eq('barbershop_id', barbershop.id)
+        .order('data_registro', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setRecords(data || []);
+    } catch (error) {
+      console.error('Error fetching financial records:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os registros financeiros",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const totalReceived = records.reduce((sum, r) => sum + r.valor, 0);
+  const todayRecords = records.filter(r => {
+    const recordDate = new Date(r.data_registro);
+    const today = new Date();
+    return recordDate.toDateString() === today.toDateString();
+  });
+  const todayTotal = todayRecords.reduce((sum, r) => sum + r.valor, 0);
+
+  const cardTotal = records
+    .filter(r => r.metodo_pagamento?.toLowerCase() === 'cartao')
+    .reduce((sum, r) => sum + r.valor, 0);
+  
+  const cashTotal = records
+    .filter(r => r.metodo_pagamento?.toLowerCase() === 'dinheiro')
+    .reduce((sum, r) => sum + r.valor, 0);
+  
+  const pixTotal = records
+    .filter(r => r.metodo_pagamento?.toLowerCase() === 'pix')
+    .reduce((sum, r) => sum + r.valor, 0);
+
+  const avgTicket = records.length > 0 ? totalReceived / records.length : 0;
 
   return (
     <SidebarProvider>
@@ -85,13 +110,13 @@ const Financial = () => {
               <Card className="shadow-elegant hover:shadow-glow transition-all duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Receita do Mês
+                    Receita Total
                   </CardTitle>
                   <TrendingUp className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ 3.240</div>
-                  <p className="text-xs text-accent font-medium">+15% vs mês anterior</p>
+                  <div className="text-2xl font-bold text-primary">R$ {totalReceived.toFixed(2)}</div>
+                  <p className="text-xs text-accent font-medium">{records.length} transações</p>
                 </CardContent>
               </Card>
 
@@ -103,21 +128,8 @@ const Financial = () => {
                   <DollarSign className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ {totalReceived.toFixed(2)}</div>
-                  <p className="text-xs text-accent font-medium">4 serviços realizados</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-elegant hover:shadow-glow transition-all duration-300">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Valores Pendentes
-                  </CardTitle>
-                  <TrendingDown className="h-4 w-4 text-accent" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ {totalPending.toFixed(2)}</div>
-                  <p className="text-xs text-accent font-medium">1 pagamento pendente</p>
+                  <div className="text-2xl font-bold text-primary">R$ {todayTotal.toFixed(2)}</div>
+                  <p className="text-xs text-accent font-medium">{todayRecords.length} serviços realizados</p>
                 </CardContent>
               </Card>
 
@@ -129,8 +141,21 @@ const Financial = () => {
                   <DollarSign className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ 42,50</div>
-                  <p className="text-xs text-accent font-medium">+8% vs mês anterior</p>
+                  <div className="text-2xl font-bold text-primary">R$ {avgTicket.toFixed(2)}</div>
+                  <p className="text-xs text-accent font-medium">por serviço</p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-elegant hover:shadow-glow transition-all duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Métodos de Pagamento
+                  </CardTitle>
+                  <CreditCard className="h-4 w-4 text-accent" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-primary">3</div>
+                  <p className="text-xs text-accent font-medium">formas disponíveis</p>
                 </CardContent>
               </Card>
             </div>
@@ -141,33 +166,39 @@ const Financial = () => {
                 <CardTitle>Transações Recentes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {transactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-accent rounded-full flex items-center justify-center">
-                        {transaction.paymentMethod === 'Cartão' ? (
-                          <CreditCard className="w-6 h-6 text-accent-foreground" />
-                        ) : (
-                          <Banknote className="w-6 h-6 text-accent-foreground" />
-                        )}
+                {records.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhum registro financeiro ainda
+                  </p>
+                ) : (
+                  records.slice(0, 10).map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-accent rounded-full flex items-center justify-center">
+                          {record.metodo_pagamento?.toLowerCase() === 'cartao' ? (
+                            <CreditCard className="w-6 h-6 text-accent-foreground" />
+                          ) : (
+                            <Banknote className="w-6 h-6 text-accent-foreground" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-primary">{record.tipo}</h3>
+                          <p className="text-sm text-muted-foreground">{record.descricao || "Sem descrição"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {record.metodo_pagamento || "Não especificado"} • {format(new Date(record.data_registro), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium text-primary">{transaction.client}</h3>
-                        <p className="text-sm text-muted-foreground">{transaction.service}</p>
-                        <p className="text-xs text-muted-foreground">{transaction.paymentMethod} • {transaction.date}</p>
+                      <div className="text-right">
+                        <p className="font-bold text-lg text-primary">R$ {record.valor.toFixed(2)}</p>
+                        <Badge variant="default">Pago</Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg text-primary">R$ {transaction.value.toFixed(2)}</p>
-                      <Badge variant={transaction.status === 'pago' ? 'default' : 'secondary'}>
-                        {transaction.status === 'pago' ? 'Pago' : 'Pendente'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -181,8 +212,10 @@ const Financial = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ 125,00</div>
-                  <p className="text-sm text-muted-foreground">2 transações hoje</p>
+                  <div className="text-2xl font-bold text-primary">R$ {cardTotal.toFixed(2)}</div>
+                  <p className="text-sm text-muted-foreground">
+                    {records.filter(r => r.metodo_pagamento?.toLowerCase() === 'cartao').length} transações
+                  </p>
                 </CardContent>
               </Card>
 
@@ -194,8 +227,10 @@ const Financial = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ 25,00</div>
-                  <p className="text-sm text-muted-foreground">1 transação hoje</p>
+                  <div className="text-2xl font-bold text-primary">R$ {cashTotal.toFixed(2)}</div>
+                  <p className="text-sm text-muted-foreground">
+                    {records.filter(r => r.metodo_pagamento?.toLowerCase() === 'dinheiro').length} transações
+                  </p>
                 </CardContent>
               </Card>
 
@@ -207,8 +242,10 @@ const Financial = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-primary">R$ 20,00</div>
-                  <p className="text-sm text-muted-foreground">1 transação pendente</p>
+                  <div className="text-2xl font-bold text-primary">R$ {pixTotal.toFixed(2)}</div>
+                  <p className="text-sm text-muted-foreground">
+                    {records.filter(r => r.metodo_pagamento?.toLowerCase() === 'pix').length} transações
+                  </p>
                 </CardContent>
               </Card>
             </div>
