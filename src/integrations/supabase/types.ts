@@ -110,7 +110,10 @@ export type Database = {
         Row: {
           created_at: string | null
           descricao: string | null
+          dias_funcionamento: string[] | null
           endereco: string | null
+          horario_abertura: string | null
+          horario_fechamento: string | null
           id: number
           nome: string
           owner_id: string
@@ -121,7 +124,10 @@ export type Database = {
         Insert: {
           created_at?: string | null
           descricao?: string | null
+          dias_funcionamento?: string[] | null
           endereco?: string | null
+          horario_abertura?: string | null
+          horario_fechamento?: string | null
           id?: number
           nome: string
           owner_id: string
@@ -132,7 +138,10 @@ export type Database = {
         Update: {
           created_at?: string | null
           descricao?: string | null
+          dias_funcionamento?: string[] | null
           endereco?: string | null
+          horario_abertura?: string | null
+          horario_fechamento?: string | null
           id?: number
           nome?: string
           owner_id?: string
@@ -355,6 +364,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "barbeiro" | "cliente"
+      appointment_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "no_show"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -483,6 +498,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "barbeiro", "cliente"],
+      appointment_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "no_show",
+        "cancelled",
+      ],
     },
   },
 } as const
