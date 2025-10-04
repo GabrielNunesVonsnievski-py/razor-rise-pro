@@ -131,23 +131,6 @@ const PublicBooking = () => {
     setSubmitting(true);
 
     try {
-      // Verificar se usuário está autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        // Redirecionar para login com informações do agendamento
-        sessionStorage.setItem('pendingBooking', JSON.stringify({
-          barbershopId: barbershop?.id,
-          ...formData
-        }));
-        toast({
-          title: 'Login necessário',
-          description: 'Faça login para concluir seu agendamento.',
-        });
-        navigate('/auth');
-        return;
-      }
-
       // Verificar conflito de horário
       const { data: existingAppointments } = await supabase
         .from('appointments')
@@ -155,7 +138,7 @@ const PublicBooking = () => {
         .eq('barbershop_id', barbershop?.id)
         .eq('date', formData.date)
         .eq('time', formData.time)
-        .neq('status', 'cancelled');
+        .in('status', ['pending', 'confirmed']);
 
       if (existingAppointments && existingAppointments.length > 0) {
         toast({
@@ -163,7 +146,49 @@ const PublicBooking = () => {
           description: 'Este horário já está reservado. Escolha outro.',
           variant: 'destructive'
         });
+        setSubmitting(false);
         return;
+      }
+
+      // Verificar se usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      let userId = user?.id;
+
+      // Se não estiver autenticado, criar conta automaticamente
+      if (!user) {
+        const tempEmail = `${formData.phone.replace(/\D/g, '')}@temp.winix.app`;
+        const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+        
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: tempEmail,
+          password: tempPassword,
+          options: {
+            data: {
+              full_name: formData.fullName,
+              phone: formData.phone
+            }
+          }
+        });
+
+        if (signUpError) {
+          // Tentar fazer login caso o usuário já exista
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: tempEmail,
+            password: tempPassword
+          });
+
+          if (signInError) {
+            throw new Error('Não foi possível autenticar. Tente novamente.');
+          }
+          userId = signInData.user?.id;
+        } else {
+          userId = signUpData.user?.id;
+        }
+      }
+
+      if (!userId) {
+        throw new Error('Não foi possível identificar o usuário.');
       }
 
       // Buscar valor do serviço
@@ -174,7 +199,7 @@ const PublicBooking = () => {
         .from('appointments')
         .insert({
           barbershop_id: barbershop?.id,
-          user_id: user.id,
+          user_id: userId,
           client: formData.fullName,
           phone: formData.phone,
           service_id: parseInt(formData.serviceId),
@@ -187,18 +212,21 @@ const PublicBooking = () => {
 
       if (error) throw error;
 
-      // Adicionar cliente à barbearia
-      await supabase
+      // Adicionar cliente à barbearia (ignorar se já existir)
+      const { error: clientError } = await supabase
         .from('barbershop_clients')
         .insert({
           barbershop_id: barbershop?.id,
-          client_user_id: user.id
-        })
-        .select()
-        .single();
+          client_user_id: userId
+        });
 
-      // Enviar confirmação por WhatsApp (simulado)
-      const whatsappMessage = `Olá! Seu agendamento foi confirmado!\n\nBarbearia: ${barbershop?.nome}\nServiço: ${service?.nome}\nData: ${dayjs(formData.date).format('DD/MM/YYYY')}\nHorário: ${formData.time}`;
+      // Ignorar erro de duplicata
+      if (clientError && !clientError.message.includes('duplicate')) {
+        console.error('Erro ao adicionar cliente:', clientError);
+      }
+
+      // Enviar confirmação por WhatsApp
+      const whatsappMessage = `Olá ${formData.fullName}! Seu agendamento foi confirmado!\n\nBarbearia: ${barbershop?.nome}\nServiço: ${service?.nome}\nData: ${dayjs(formData.date).format('DD/MM/YYYY')}\nHorário: ${formData.time}\n\nNos vemos lá! 💈`;
       const whatsappUrl = `https://wa.me/55${formData.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`;
       
       toast({
@@ -219,11 +247,11 @@ const PublicBooking = () => {
         time: ''
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar agendamento:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível criar o agendamento. Tente novamente.',
+        description: error.message || 'Não foi possível criar o agendamento. Tente novamente.',
         variant: 'destructive'
       });
     } finally {

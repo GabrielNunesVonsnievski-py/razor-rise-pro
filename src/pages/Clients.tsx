@@ -1,81 +1,104 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Users, Phone, Mail, Calendar, Search, Plus } from "lucide-react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Users, Phone, Mail, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Client {
   id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
+  full_name: string;
+  email: string;
+  phone: string;
   created_at: string;
-  role: string;
+  total_appointments: number;
 }
 
 const Clients = () => {
+  const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        setLoading(true);
-        
-        // Buscar todos os perfis com seus roles
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, phone, created_at, user_id');
-
-        if (profilesError) throw profilesError;
-
-        if (!profiles || profiles.length === 0) {
-          setClients([]);
-          setLoading(false);
-          return;
-        }
-
-        // Buscar roles de todos os usuários
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('user_id, role');
-
-        if (rolesError) throw rolesError;
-
-        // Criar um map de user_id -> role
-        const rolesMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
-
-        // Combinar dados
-        const clientsWithRoles = profiles.map(profile => ({
-          id: profile.id,
-          full_name: profile.full_name,
-          email: profile.email,
-          phone: profile.phone,
-          created_at: profile.created_at,
-          role: rolesMap.get(profile.user_id) || 'cliente'
-        }));
-
-        setClients(clientsWithRoles);
-      } catch (error) {
-        console.error('Error fetching clients:', error);
-        toast({
-          title: "Erro ao carregar clientes",
-          description: "Não foi possível carregar a lista de clientes.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClients();
-  }, [toast]);
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Buscar barbearia do usuário
+      const { data: barbershopData } = await supabase
+        .from('barbershops')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single();
+
+      if (!barbershopData) {
+        setLoading(false);
+        return;
+      }
+
+      // Buscar clientes da barbearia
+      const { data: barbershopClients, error: clientsError } = await supabase
+        .from('barbershop_clients')
+        .select('client_user_id, created_at')
+        .eq('barbershop_id', barbershopData.id);
+
+      if (clientsError) throw clientsError;
+
+      if (!barbershopClients || barbershopClients.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Buscar perfis dos clientes
+      const clientIds = barbershopClients.map(c => c.client_user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email, phone')
+        .in('user_id', clientIds);
+
+      if (profilesError) throw profilesError;
+
+      // Buscar total de agendamentos por cliente
+      const { data: appointments } = await supabase
+        .from('appointments')
+        .select('user_id')
+        .eq('barbershop_id', barbershopData.id);
+
+      // Montar lista de clientes
+      const clientsData: Client[] = profiles?.map(profile => {
+        const clientData = barbershopClients.find(c => c.client_user_id === profile.user_id);
+        const totalAppointments = appointments?.filter(a => a.user_id === profile.user_id).length || 0;
+
+        return {
+          id: profile.user_id,
+          full_name: profile.full_name || 'Sem nome',
+          email: profile.email || 'Sem email',
+          phone: profile.phone || 'Sem telefone',
+          created_at: clientData?.created_at || '',
+          total_appointments: totalAppointments
+        };
+      }) || [];
+
+      setClients(clientsData);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os clientes.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -88,18 +111,14 @@ const Clients = () => {
               <SidebarTrigger className="lg:hidden" />
               <div>
                 <h1 className="text-2xl font-bold text-primary">Clientes</h1>
-                <p className="text-sm text-muted-foreground">Gerencie sua base de clientes</p>
+                <p className="text-sm text-muted-foreground">Gerencie seus clientes</p>
               </div>
             </div>
-            <Button variant="hero">
-              <Plus className="w-4 h-4" />
-              Novo Cliente
-            </Button>
           </header>
 
           <div className="p-6 space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="shadow-elegant">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -109,119 +128,97 @@ const Clients = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">{clients.length}</div>
-                  <p className="text-xs text-muted-foreground">Cadastrados</p>
+                  <p className="text-xs text-muted-foreground">clientes cadastrados</p>
                 </CardContent>
               </Card>
 
               <Card className="shadow-elegant">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Clientes
+                    Novos este Mês
                   </CardTitle>
-                  <Users className="h-4 w-4 text-accent" />
+                  <Calendar className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">
-                    {clients.filter(c => c.role === 'cliente').length}
+                    {clients.filter(c => {
+                      const clientDate = new Date(c.created_at);
+                      const now = new Date();
+                      return clientDate.getMonth() === now.getMonth() && 
+                             clientDate.getFullYear() === now.getFullYear();
+                    }).length}
                   </div>
-                  <p className="text-xs text-muted-foreground">Role: Cliente</p>
+                  <p className="text-xs text-muted-foreground">novos clientes</p>
                 </CardContent>
               </Card>
 
               <Card className="shadow-elegant">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Barbeiros
+                    Total de Atendimentos
                   </CardTitle>
                   <Users className="h-4 w-4 text-accent" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">
-                    {clients.filter(c => c.role === 'barbeiro').length}
+                    {clients.reduce((sum, c) => sum + c.total_appointments, 0)}
                   </div>
-                  <p className="text-xs text-muted-foreground">Role: Barbeiro</p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Administradores
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-accent" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">
-                    {clients.filter(c => c.role === 'admin' || c.role === 'manager').length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Admin/Manager</p>
+                  <p className="text-xs text-muted-foreground">serviços realizados</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Search and Filters */}
+            {/* Clients List */}
             <Card className="shadow-elegant">
               <CardHeader>
                 <CardTitle>Lista de Clientes</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Buscar clientes..." className="pl-10" />
-                  </div>
-                  <Button variant="outline">Filtros</Button>
-                </div>
-
+              <CardContent className="space-y-4">
                 {loading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Carregando clientes...
-                  </div>
+                  <p className="text-center text-muted-foreground py-8">Carregando...</p>
                 ) : clients.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhum cliente encontrado.
-                  </div>
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhum cliente cadastrado ainda
+                  </p>
                 ) : (
-                  <div className="space-y-4">
-                    {clients.map((client) => (
-                      <div
-                        key={client.id}
-                        className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-accent rounded-full flex items-center justify-center">
-                            <Users className="w-6 h-6 text-accent-foreground" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-primary">
-                                {client.full_name || 'Sem nome'}
-                              </h3>
-                              <Badge variant="secondary">
-                                {client.role.toUpperCase()}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
+                  clients.map((client) => (
+                    <div
+                      key={client.id}
+                      className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarFallback className="bg-gradient-accent text-accent-foreground font-semibold">
+                            {client.full_name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium text-primary">{client.full_name}</h3>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                            {client.phone && (
+                              <span className="flex items-center gap-1">
                                 <Phone className="w-3 h-3" />
-                                {client.phone || 'Sem telefone'}
-                              </div>
-                              <div className="flex items-center gap-1">
+                                {client.phone}
+                              </span>
+                            )}
+                            {client.email && (
+                              <span className="flex items-center gap-1">
                                 <Mail className="w-3 h-3" />
-                                {client.email || 'Sem email'}
-                              </div>
-                            </div>
+                                {client.email}
+                              </span>
+                            )}
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="w-3 h-3" />
-                            Criado: {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Cliente desde {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg text-primary">{client.total_appointments}</p>
+                        <p className="text-xs text-muted-foreground">agendamentos</p>
+                      </div>
+                    </div>
+                  ))
                 )}
               </CardContent>
             </Card>

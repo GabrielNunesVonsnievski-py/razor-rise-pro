@@ -35,10 +35,14 @@ const Appointments = () => {
     phone: "",
     time: "",
     service: "",
+    serviceId: "",
     date: "",
+    valor: 0,
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [services, setServices] = useState<any[]>([]);
+  const [barbershopId, setBarbershopId] = useState<number | null>(null);
 
   const { toast } = useToast();
 
@@ -51,9 +55,9 @@ const Appointments = () => {
     fetchUser();
   }, []);
 
-  // Buscar agendamentos da barbearia do usuário
+  // Buscar barbearia e serviços
   useEffect(() => {
-    const fetchAppointments = async () => {
+    const fetchBarbershopAndServices = async () => {
       if (!userId) return;
       
       // Buscar barbearia do usuário
@@ -64,11 +68,30 @@ const Appointments = () => {
         .single();
 
       if (!barbershopData) return;
+      
+      setBarbershopId(barbershopData.id);
+
+      // Buscar serviços da barbearia
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('*')
+        .eq('barbershop_id', barbershopData.id)
+        .eq('ativo', true);
+
+      setServices(servicesData || []);
+    };
+    fetchBarbershopAndServices();
+  }, [userId]);
+
+  // Buscar agendamentos da barbearia do usuário
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!barbershopId) return;
 
       const { data, error } = await supabase
         .from("appointments")
         .select("*")
-        .eq("barbershop_id", barbershopData.id)
+        .eq("barbershop_id", barbershopId)
         .order("date", { ascending: true })
         .order("time", { ascending: true });
         
@@ -84,7 +107,7 @@ const Appointments = () => {
       }
     };
     fetchAppointments();
-  }, [userId]);
+  }, [barbershopId]);
 
   const handleUpdateStatus = async (appointmentId: string, newStatus: "completed" | "no_show") => {
     const appointment = appointments.find(a => a.id === appointmentId);
@@ -144,9 +167,9 @@ const Appointments = () => {
 
   // Criar novo agendamento
   const handleCreateAppointment = async () => {
-    if (!userId) return;
+    if (!userId || !barbershopId) return;
 
-    if (!newAppointment.client || !newAppointment.phone || !newAppointment.time || !newAppointment.service || !newAppointment.date) {
+    if (!newAppointment.client || !newAppointment.phone || !newAppointment.time || !newAppointment.serviceId || !newAppointment.date) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos.",
@@ -155,9 +178,22 @@ const Appointments = () => {
       return;
     }
 
+    const selectedService = services.find(s => s.id === parseInt(newAppointment.serviceId));
+
     const { data, error } = await supabase
       .from("appointments")
-      .insert([{ ...newAppointment, status: "pending", user_id: userId }])
+      .insert([{ 
+        client: newAppointment.client,
+        phone: newAppointment.phone,
+        time: newAppointment.time,
+        service: selectedService?.nome || '',
+        service_id: parseInt(newAppointment.serviceId),
+        date: newAppointment.date,
+        valor: selectedService?.valor || 0,
+        status: "pending", 
+        user_id: userId,
+        barbershop_id: barbershopId
+      }])
       .select();
 
     if (error) {
@@ -173,7 +209,7 @@ const Appointments = () => {
       description: `Agendamento para ${newAppointment.client} criado com sucesso!`,
     });
 
-    setNewAppointment({ client: "", phone: "", time: "", service: "", date: "" });
+    setNewAppointment({ client: "", phone: "", time: "", service: "", serviceId: "", date: "", valor: 0 });
     setIsDialogOpen(false);
   };
 
@@ -240,17 +276,18 @@ const Appointments = () => {
                   <div className="grid gap-2">
                     <Label htmlFor="service">Serviço</Label>
                     <Select
-                      value={newAppointment.service}
-                      onValueChange={(value) => setNewAppointment({ ...newAppointment, service: value })}
+                      value={newAppointment.serviceId}
+                      onValueChange={(value) => setNewAppointment({ ...newAppointment, serviceId: value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o serviço" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="corte">Corte</SelectItem>
-                        <SelectItem value="barba">Barba</SelectItem>
-                        <SelectItem value="corte-barba">Corte + Barba</SelectItem>
-                        <SelectItem value="corte-barba-sobrancelha">Corte + Barba + Sobrancelha</SelectItem>
+                        {services.map((service) => (
+                          <SelectItem key={service.id} value={service.id.toString()}>
+                            {service.nome} - R$ {service.valor.toFixed(2)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -323,17 +360,18 @@ const Appointments = () => {
                   <div className="grid gap-2">
                     <Label htmlFor="service-mobile">Serviço</Label>
                     <Select
-                      value={newAppointment.service}
-                      onValueChange={(value) => setNewAppointment({ ...newAppointment, service: value })}
+                      value={newAppointment.serviceId}
+                      onValueChange={(value) => setNewAppointment({ ...newAppointment, serviceId: value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o serviço" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="corte">Corte</SelectItem>
-                        <SelectItem value="barba">Barba</SelectItem>
-                        <SelectItem value="corte-barba">Corte + Barba</SelectItem>
-                        <SelectItem value="corte-barba-sobrancelha">Corte + Barba + Sobrancelha</SelectItem>
+                        {services.map((service) => (
+                          <SelectItem key={service.id} value={service.id.toString()}>
+                            {service.nome} - R$ {service.valor.toFixed(2)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
