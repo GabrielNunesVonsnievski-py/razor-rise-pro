@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { useUserRole } from "@/hooks/useUserRole"
+import { UserHeader } from "@/components/UserHeader"
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home},
@@ -34,9 +34,6 @@ const mainItems = [
   { title: "Clientes", url: "/clients", icon: Users },
   { title: "Financeiro", url: "/financial", icon: TrendingUp },
   { title: "Promoções", url: "/promotions", icon: Star },
-]
-
-const settingsItems = [
   { title: "Informações da Barbearia", url: "/settings", icon: Settings },
 ]
 
@@ -45,7 +42,6 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { canAccessSettings } = useUserRole()
   const currentPath = location.pathname
   const isCollapsed = !open
 
@@ -76,12 +72,19 @@ export function AppSidebar() {
       collapsible="icon"
     >
       <SidebarHeader className="border-b border-border/50">
-        <div className="flex items-center gap-3 px-3 py-4">
-          <img src={winixLogo} alt="Winix" className="w-10 h-10" />
+        <div className="flex flex-col gap-3 px-3 py-4">
+          <div className="flex items-center gap-3">
+            <img src={winixLogo} alt="Winix" className="w-10 h-10" />
+            {!isCollapsed && (
+              <div>
+                <h2 className="font-bold text-lg text-primary">Winix</h2>
+                <p className="text-xs text-muted-foreground">Barbearia Premium</p>
+              </div>
+            )}
+          </div>
           {!isCollapsed && (
-            <div>
-              <h2 className="font-bold text-lg text-primary">Winix</h2>
-              <p className="text-xs text-muted-foreground">Barbearia Premium</p>
+            <div className="pt-2 border-t border-border/30">
+              <UserHeader />
             </div>
           )}
         </div>
@@ -89,7 +92,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -105,26 +108,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {canAccessSettings && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Sistema</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {settingsItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url}>
-                        <item.icon className="w-4 h-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/50">

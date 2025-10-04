@@ -27,16 +27,32 @@ const Auth = () => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Sync profile on auth state change (login via Google, etc)
-        if (session?.user && event === 'SIGNED_IN') {
-          setTimeout(() => {
-            supabase.rpc('sync_user_profile', { user_id_param: session.user.id });
+        // Create or update profile on auth state change
+        if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          setTimeout(async () => {
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+
+            if (!existingProfile) {
+              await supabase.from('profiles').upsert({
+                user_id: session.user.id,
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+                phone: session.user.user_metadata?.phone || '',
+              }, { onConflict: 'user_id' });
+            }
           }, 0);
-          navigate('/dashboard');
+          
+          if (event === 'SIGNED_IN') {
+            navigate('/dashboard');
+          }
         }
       }
     );
@@ -79,9 +95,22 @@ const Auth = () => {
           });
         }
       } else {
-        // Sync user profile to database
+        // Create or update profile after login
         if (data.user) {
-          await supabase.rpc('sync_user_profile', { user_id_param: data.user.id });
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', data.user.id)
+            .maybeSingle();
+
+          if (!existingProfile) {
+            await supabase.from('profiles').upsert({
+              user_id: data.user.id,
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || '',
+              phone: data.user.user_metadata?.phone || '',
+            }, { onConflict: 'user_id' });
+          }
         }
         
         toast({

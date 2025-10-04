@@ -7,15 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserHeader } from "@/components/UserHeader";
+import { DashboardStats } from "@/components/DashboardStats";
 
-import { Calendar, Clock, Scissors, TrendingUp, Users, Star, Plus } from "lucide-react";
+import { Calendar, Clock, Scissors } from "lucide-react";
 
 // Tipagem para agendamentos
 interface Appointment {
@@ -32,15 +28,6 @@ interface Appointment {
 
 const BarberDashboard = () => {
   const { toast } = useToast();
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newAppointment, setNewAppointment] = useState({
-    client: "",
-    phone: "",
-    date: "",
-    time: "",
-    service: "",
-  });
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -84,63 +71,6 @@ const BarberDashboard = () => {
     }
   }, [userId]);
 
-  // Criar novo agendamento
-  const handleCreateAppointment = async () => {
-    const { client, phone, date, time, service } = newAppointment;
-    if (!userId) return;
-
-    if (!client || !phone || !date || !time || !service) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos para criar um agendamento.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { error } = await supabase.from("appointments").insert([
-      {
-        client,
-        phone,
-        date,
-        time,
-        service,
-        status: "pending",
-        user_id: userId, // associa ao usuário logado
-      },
-    ]);
-
-    if (error) {
-      toast({
-        title: "Erro ao criar agendamento",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Agendamento criado",
-        description: `Agendamento para ${client} criado com sucesso!`,
-      });
-      setNewAppointment({
-        client: "",
-        phone: "",
-        date: "",
-        time: "",
-        service: "",
-      });
-      setIsDialogOpen(false);
-      fetchTodayAppointments();
-    }
-  };
-
-  // Estatísticas dinâmicas
-  const stats = [
-    { title: "Agendamentos Hoje", value: todayAppointments.length.toString(), icon: Calendar, trend: "+2" },
-    { title: "Receita do Mês", value: "R$ 3.240", icon: TrendingUp, trend: "+15%" },
-    { title: "Clientes Ativos", value: "89", icon: Users, trend: "+8" },
-    { title: "Avaliação", value: "4.9", icon: Star, trend: "★★★★★" },
-  ];
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -154,7 +84,6 @@ const BarberDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <UserHeader />
               <Button variant="outline" size="sm">
                 <Calendar className="w-4 h-4" />
                 Ver Agenda
@@ -177,20 +106,7 @@ const BarberDashboard = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 dashboard-grid">
-              {stats.map((stat, index) => (
-                <Card key={index} className="shadow-elegant hover:shadow-glow transition-all duration-300 stat-card">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                    <stat.icon className="h-3 w-3 md:h-4 md:w-4 text-accent" />
-                  </CardHeader>
-                  <CardContent className="p-3 pt-0">
-                    <div className="text-lg md:text-2xl font-bold text-primary">{stat.value}</div>
-                    <p className="text-xs text-accent font-medium">{stat.trend}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <DashboardStats />
 
             {/* Today's Appointments */}
             <Card className="shadow-elegant">

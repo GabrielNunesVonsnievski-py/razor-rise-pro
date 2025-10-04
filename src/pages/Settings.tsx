@@ -3,49 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Clock, Palette, Shield } from "lucide-react";
+import { User, Bell, Shield } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { useUserRole } from "@/hooks/useUserRole";
 import { UserHeader } from "@/components/UserHeader";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BarbershopSettings from "@/components/BarbershopSettings";
 import ServicesManagement from "@/components/ServicesManagement";
 
 const SettingsPage = () => {
-  const { canAccessSettings, loading } = useUserRole();
-  const navigate = useNavigate();
-
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (!loading && !canAccessSettings) {
-      toast({
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta página.",
-        variant: "destructive",
-      });
-      navigate('/dashboard');
-    }
-  }, [canAccessSettings, loading, navigate, toast]);
-
-  if (loading) {
-    return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full items-center justify-center">
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
-  if (!canAccessSettings) {
-    return null;
-  }
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -61,7 +27,6 @@ const SettingsPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <UserHeader />
               <Button variant="hero">
                 Salvar Alterações
               </Button>
