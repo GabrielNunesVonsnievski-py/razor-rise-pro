@@ -191,165 +191,51 @@ const BarberDashboard = () => {
             </div>
 
             {/* Today's Appointments */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-              <Card className="lg:col-span-2 shadow-elegant">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                    <Clock className="w-4 h-4 md:w-5 md:h-5 text-accent" />
-                    Agendamentos de Hoje
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 md:space-y-4">
-                  {todayAppointments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">Nenhum agendamento para hoje.</p>
-                  ) : (
-                    todayAppointments.map((appointment) => (
-                      <div
-                        key={appointment.id}
-                        className="flex items-center justify-between p-3 md:p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors appointment-card"
-                      >
-                        <div className="flex items-center gap-3 md:gap-4">
-                          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-accent rounded-full flex items-center justify-center">
-                            <Scissors className="w-4 h-4 md:w-6 md:h-6 text-accent-foreground" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-primary text-sm md:text-base">{appointment.client}</h3>
-                            <p className="text-xs md:text-sm text-muted-foreground">{appointment.service}</p>
-                            <p className="text-xs text-muted-foreground md:hidden">{appointment.phone}</p>
-                          </div>
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                  <Clock className="w-4 h-4 md:w-5 md:h-5 text-accent" />
+                  Agendamentos de Hoje
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 md:space-y-4">
+                {todayAppointments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum agendamento para hoje.</p>
+                ) : (
+                  todayAppointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className="flex items-center justify-between p-3 md:p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors appointment-card"
+                    >
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-accent rounded-full flex items-center justify-center">
+                          <Scissors className="w-4 h-4 md:w-6 md:h-6 text-accent-foreground" />
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium text-primary text-sm md:text-base">{appointment.time}</p>
-                          <Badge variant={appointment.status === "confirmed" ? "default" : "destructive"} className="text-xs">
-                            {appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground hidden md:block">{appointment.phone}</p>
+                        <div>
+                          <h3 className="font-medium text-primary text-sm md:text-base">{appointment.client}</h3>
+                          <p className="text-xs md:text-sm text-muted-foreground">{appointment.service}</p>
+                          <p className="text-xs text-muted-foreground md:hidden">{appointment.phone}</p>
                         </div>
                       </div>
-                    ))
-                  )}
-                  <Button
-                    variant="accent"
-                    className="w-full text-sm md:text-base"
-                    onClick={() => toast({ title: "Funcionalidade não implementada" })}
-                  >
-                    Ver Todos os Agendamentos
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <Card className="shadow-elegant">
-                <CardHeader>
-                  <CardTitle className="text-lg md:text-xl">Ações Rápidas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="hero" className="w-full">
-                        <Plus className="w-4 h-4" />
-                        Novo Agendamento
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px] mx-4">
-                      <DialogHeader>
-                        <DialogTitle>Novo Agendamento</DialogTitle>
-                      </DialogHeader>
-
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="client">Nome do Cliente</Label>
-                          <Input
-                            id="client"
-                            value={newAppointment.client}
-                            onChange={(e) =>
-                              setNewAppointment({ ...newAppointment, client: e.target.value })
-                            }
-                            placeholder="Digite o nome do cliente"
-                          />
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label htmlFor="phone">Telefone</Label>
-                          <Input
-                            id="phone"
-                            value={newAppointment.phone}
-                            onChange={(e) =>
-                              setNewAppointment({ ...newAppointment, phone: e.target.value })
-                            }
-                            placeholder="(11) 99999-9999"
-                          />
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label htmlFor="date">Data</Label>
-                          <Input
-                            id="date"
-                            type="date"
-                            value={newAppointment.date}
-                            onChange={(e) =>
-                              setNewAppointment({ ...newAppointment, date: e.target.value })
-                            }
-                          />
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label htmlFor="time">Horário</Label>
-                          <Input
-                            id="time"
-                            type="time"
-                            value={newAppointment.time}
-                            onChange={(e) =>
-                              setNewAppointment({ ...newAppointment, time: e.target.value })
-                            }
-                          />
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label htmlFor="service">Serviço</Label>
-                          <Select
-                            value={newAppointment.service}
-                            onValueChange={(value) =>
-                              setNewAppointment({ ...newAppointment, service: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o serviço" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="corte">Corte</SelectItem>
-                              <SelectItem value="barba">Barba</SelectItem>
-                              <SelectItem value="corte-barba">Corte + Barba</SelectItem>
-                              <SelectItem value="corte-barba-sobrancelha">
-                                Corte + Barba + Sobrancelha
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="text-right">
+                        <p className="font-medium text-primary text-sm md:text-base">{appointment.time}</p>
+                        <Badge variant={appointment.status === "confirmed" ? "default" : "destructive"} className="text-xs">
+                          {appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground hidden md:block">{appointment.phone}</p>
                       </div>
-
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleCreateAppointment}>Criar Agendamento</Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  <Button variant="premium" className="w-full justify-start text-sm">
-                    <Star className="w-4 h-4" />
-                    Criar Promoção
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
-                    <TrendingUp className="w-4 h-4" />
-                    Relatório Financeiro
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start text-sm">
-                    <Users className="w-4 h-4" />
-                    Gerenciar Clientes
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                    </div>
+                  ))
+                )}
+                <Button
+                  variant="accent"
+                  className="w-full text-sm md:text-base"
+                  onClick={() => toast({ title: "Funcionalidade não implementada" })}
+                >
+                  Ver Todos os Agendamentos
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

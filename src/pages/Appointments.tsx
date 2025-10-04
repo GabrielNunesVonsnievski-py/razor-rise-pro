@@ -21,8 +21,10 @@ interface Appointment {
   time: string;
   service: string;
   date: string;
-  status: "pending" | "confirmed";
+  status: "pending" | "confirmed" | "completed" | "no_show";
   user_id: string;
+  valor: number;
+  barbershop_id?: number;
   created_at?: string;
 }
 
@@ -49,15 +51,27 @@ const Appointments = () => {
     fetchUser();
   }, []);
 
-  // Buscar agendamentos do usuário logado
+  // Buscar agendamentos da barbearia do usuário
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!userId) return;
+      
+      // Buscar barbearia do usuário
+      const { data: barbershopData } = await supabase
+        .from('barbershops')
+        .select('id')
+        .eq('owner_id', userId)
+        .single();
+
+      if (!barbershopData) return;
+
       const { data, error } = await supabase
         .from("appointments")
         .select("*")
-        .eq("user_id", userId)
-        .order("date");
+        .eq("barbershop_id", barbershopData.id)
+        .order("date", { ascending: true })
+        .order("time", { ascending: true });
+        
       if (error) {
         console.error(error);
         toast({
@@ -71,6 +85,62 @@ const Appointments = () => {
     };
     fetchAppointments();
   }, [userId]);
+
+  const handleUpdateStatus = async (appointmentId: string, newStatus: "completed" | "no_show") => {
+    const appointment = appointments.find(a => a.id === appointmentId);
+    if (!appointment) return;
+
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: newStatus })
+      .eq('id', appointmentId);
+
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar o status.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Se concluído, registrar nas finanças
+    if (newStatus === 'completed') {
+      const { data: barbershopData } = await supabase
+        .from('barbershops')
+        .select('id')
+        .eq('owner_id', userId)
+        .single();
+
+      if (barbershopData) {
+        await supabase
+          .from('financial_records')
+          .insert({
+            barbershop_id: barbershopData.id,
+            appointment_id: appointmentId,
+            tipo: 'receita',
+            valor: appointment.valor,
+            descricao: `Serviço: ${appointment.service} - Cliente: ${appointment.client}`,
+            metodo_pagamento: 'dinheiro' // Padrão, pode ser editado depois
+          });
+      }
+
+      toast({
+        title: 'Concluído!',
+        description: 'Agendamento marcado como concluído e registrado nas finanças.'
+      });
+    } else {
+      toast({
+        title: 'Status atualizado',
+        description: 'Agendamento marcado como "Não compareceu".'
+      });
+    }
+
+    // Atualizar lista
+    setAppointments(prev => 
+      prev.map(a => a.id === appointmentId ? { ...a, status: newStatus } : a)
+    );
+  };
 
   // Criar novo agendamento
   const handleCreateAppointment = async () => {
@@ -298,7 +368,7 @@ const Appointments = () => {
                 {appointments.map((appointment) => (
                   <div
                     key={appointment.id}
-                    className="flex items-center justify-between p-3 md:p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors"
+                    className="flex flex-col md:flex-row md:items-center justify-between p-3 md:p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors gap-3"
                   >
                     <div className="flex items-center gap-3 md:gap-4">
                       <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-accent rounded-full flex items-center justify-center">
@@ -307,22 +377,50 @@ const Appointments = () => {
                       <div>
                         <h3 className="font-medium text-primary text-sm md:text-base">{appointment.client}</h3>
                         <p className="text-xs md:text-sm text-muted-foreground">{appointment.service}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground md:hidden">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Phone className="w-3 h-3" />
                           {appointment.phone}
                         </div>
+                        <p className="text-sm font-medium text-accent mt-1">R$ {appointment.valor?.toFixed(2) || '0.00'}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-primary text-sm md:text-base">{appointment.time}</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">{appointment.date}</p>
-                      <Badge variant={appointment.status === "confirmed" ? "default" : "secondary"} className="text-xs">
-                        {appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
-                      </Badge>
-                      <div className="items-center gap-2 text-xs text-muted-foreground hidden md:flex">
-                        <Phone className="w-3 h-3" />
-                        {appointment.phone}
+                    <div className="flex flex-col gap-2">
+                      <div className="text-right">
+                        <p className="font-medium text-primary text-sm md:text-base">{appointment.time}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground">{appointment.date}</p>
+                        <Badge 
+                          variant={
+                            appointment.status === "completed" ? "default" : 
+                            appointment.status === "no_show" ? "destructive" : 
+                            "secondary"
+                          } 
+                          className="text-xs mt-1"
+                        >
+                          {appointment.status === "completed" ? "Concluído" : 
+                           appointment.status === "no_show" ? "Não compareceu" :
+                           appointment.status === "confirmed" ? "Confirmado" : "Pendente"}
+                        </Badge>
                       </div>
+                      {(appointment.status === "pending" || appointment.status === "confirmed") && (
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="default"
+                            onClick={() => handleUpdateStatus(appointment.id, 'completed')}
+                            className="text-xs"
+                          >
+                            Concluir
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => handleUpdateStatus(appointment.id, 'no_show')}
+                            className="text-xs"
+                          >
+                            Não compareceu
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, DollarSign, Calendar, CreditCard, Banknote } from "lucide-react";
+import { TrendingUp, DollarSign, Calendar, CreditCard, Banknote, FileText } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useBarbershop } from "@/hooks/useBarbershop";
@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { generateMonthlyReport } from "@/utils/pdfGenerator";
+import dayjs from "dayjs";
 
 interface FinancialRecord {
   id: number;
@@ -78,6 +80,35 @@ const Financial = () => {
 
   const avgTicket = records.length > 0 ? totalReceived / records.length : 0;
 
+  const handleGenerateReport = async () => {
+    if (!barbershop) return;
+
+    const startDate = dayjs().startOf('month').format('YYYY-MM-DD');
+    const endDate = dayjs().endOf('month').format('YYYY-MM-DD');
+
+    const { data: reportRecords } = await supabase
+      .from('financial_records')
+      .select('*')
+      .eq('barbershop_id', barbershop.id)
+      .eq('tipo', 'receita')
+      .gte('data_registro', startDate)
+      .lte('data_registro', endDate);
+
+    if (reportRecords) {
+      generateMonthlyReport({
+        records: reportRecords,
+        startDate,
+        endDate,
+        barbershopName: barbershop.nome
+      });
+
+      toast({
+        title: 'Relatório gerado!',
+        description: 'O PDF foi baixado com sucesso.'
+      });
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -93,9 +124,9 @@ const Financial = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" size="sm">
-                <Calendar className="w-4 h-4" />
-                Relatório
+              <Button variant="outline" size="sm" onClick={handleGenerateReport}>
+                <FileText className="w-4 h-4" />
+                Gerar Relatório PDF
               </Button>
               <Button variant="hero" size="sm">
                 <DollarSign className="w-4 h-4" />

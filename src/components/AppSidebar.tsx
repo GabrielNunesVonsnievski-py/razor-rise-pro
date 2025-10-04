@@ -38,7 +38,7 @@ const mainItems = [
 ]
 
 const settingsItems = [
-  { title: "Configurações", url: "/settings", icon: Settings },
+  { title: "Informações da Barbearia", url: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {

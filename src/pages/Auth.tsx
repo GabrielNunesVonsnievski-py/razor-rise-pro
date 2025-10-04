@@ -201,9 +201,9 @@ const Auth = () => {
       } else {
         toast({
           title: "Cadastro realizado!",
-          description: "Conta criada com sucesso! Bem-vindo ao Winix.",
+          description: "Por favor, confirme seu email para continuar.",
         });
-        // Redirect to welcome page after successful signup
+        // Mostrar tela de confirmação
         navigate('/welcome');
       }
     } catch (error) {
