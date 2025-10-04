@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Scissors, ArrowLeft, Phone, User as UserIcon, MapPin, Clock, Tag } from 'lucide-react';
 import InputMask from 'react-input-mask';
 import dayjs from 'dayjs';
+import { z } from 'zod';
 
 interface Service {
   id: number;
@@ -111,6 +112,32 @@ const PublicBooking = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Schema de validação com Zod
+    const bookingSchema = z.object({
+      fullName: z.string()
+        .trim()
+        .min(2, 'Nome deve ter pelo menos 2 caracteres')
+        .max(100, 'Nome deve ter no máximo 100 caracteres')
+        .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Nome contém caracteres inválidos'),
+      phone: z.string()
+        .trim()
+        .regex(/^\(\d{2}\)\s?\d{4,5}-?\d{4}$/, 'Telefone inválido'),
+      serviceId: z.string().min(1, 'Selecione um serviço'),
+      date: z.string().min(1, 'Selecione uma data'),
+      time: z.string().min(1, 'Selecione um horário')
+    });
+
+    // Validação dos dados
+    const validation = bookingSchema.safeParse(formData);
+    if (!validation.success) {
+      toast({
+        title: 'Dados inválidos',
+        description: validation.error.errors[0].message,
+        variant: 'destructive'
+      });
+      return;
+    }
     
     if (!formData.fullName || !formData.phone || !formData.serviceId || !formData.date || !formData.time) {
       toast({
@@ -250,11 +277,16 @@ const PublicBooking = () => {
 
       // Ignorar erro de duplicata
       if (clientError && !clientError.message.includes('duplicate')) {
-        console.error('Erro ao adicionar cliente:', clientError);
+        // Log silencioso - não expor detalhes do erro
       }
 
+      // Sanitizar dados para WhatsApp (já validados pelo Zod)
+      const sanitizedName = formData.fullName.trim().slice(0, 100);
+      const sanitizedService = service?.nome?.trim().slice(0, 100) || 'Serviço';
+      const sanitizedBarbershop = barbershop?.nome?.trim().slice(0, 100) || 'Barbearia';
+      
       // Enviar confirmação por WhatsApp
-      const whatsappMessage = `Olá ${formData.fullName}! Seu agendamento foi confirmado!\n\nBarbearia: ${barbershop?.nome}\nServiço: ${service?.nome}\nData: ${dayjs(formData.date).format('DD/MM/YYYY')}\nHorário: ${formData.time}\n\nNos vemos lá! 💈`;
+      const whatsappMessage = `Olá ${sanitizedName}! Seu agendamento foi confirmado!\n\nBarbearia: ${sanitizedBarbershop}\nServiço: ${sanitizedService}\nData: ${dayjs(formData.date).format('DD/MM/YYYY')}\nHorário: ${formData.time}\n\nNos vemos lá! 💈`;
       const whatsappUrl = `https://wa.me/55${formData.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`;
       
       toast({
@@ -279,10 +311,13 @@ const PublicBooking = () => {
       });
 
     } catch (error: any) {
-      console.error('Erro ao criar agendamento:', error);
+      // Log seguro sem expor detalhes sensíveis
+      if (import.meta.env.DEV) {
+        console.error('Booking error:', error?.message);
+      }
       toast({
         title: 'Erro',
-        description: error.message || 'Não foi possível criar o agendamento. Tente novamente.',
+        description: 'Não foi possível criar o agendamento. Tente novamente.',
         variant: 'destructive'
       });
     } finally {

@@ -67,7 +67,9 @@ const Promotions = () => {
       if (error) throw error;
       setPromotions(data || []);
     } catch (error) {
-      console.error('Error fetching promotions:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching promotions:', error);
+      }
       toast({
         title: "Erro",
         description: "Não foi possível carregar as promoções",
@@ -116,7 +118,9 @@ const Promotions = () => {
       setEditing(null);
       fetchPromotions();
     } catch (error) {
-      console.error('Error saving promotion:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error saving promotion:', error);
+      }
       toast({
         title: "Erro",
         description: "Não foi possível salvar a promoção",
@@ -150,7 +154,9 @@ const Promotions = () => {
       toast({ title: "Promoção removida com sucesso!" });
       fetchPromotions();
     } catch (error) {
-      console.error('Error deleting promotion:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error deleting promotion:', error);
+      }
       toast({
         title: "Erro",
         description: "Não foi possível remover a promoção",
@@ -169,7 +175,9 @@ const Promotions = () => {
       if (error) throw error;
       fetchPromotions();
     } catch (error) {
-      console.error('Error toggling promotion:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error toggling promotion:', error);
+      }
     }
   };
 
