@@ -6,6 +6,7 @@ import { TrendingUp, DollarSign, Calendar, CreditCard, Banknote, FileText } from
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useBarbershop } from "@/hooks/useBarbershop";
+import { UserHeader } from "@/components/UserHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -123,7 +124,8 @@ const Financial = () => {
                 <p className="text-sm text-muted-foreground">Controle suas receitas e despesas</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
+              <UserHeader />
               <Button variant="outline" size="sm" onClick={handleGenerateReport}>
                 <FileText className="w-4 h-4" />
                 Gerar Relatório PDF

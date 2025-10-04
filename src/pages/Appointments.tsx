@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { UserHeader } from "@/components/UserHeader";
 
 import { Calendar, Clock, User, Phone, Plus } from "lucide-react";
 
@@ -243,14 +244,16 @@ const Appointments = () => {
                 <p className="text-sm text-muted-foreground">Gerencie seus horários</p>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="hero">
-                  <Plus className="w-4 h-4" />
-                  Novo Agendamento
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] mx-4">
+            <div className="flex items-center gap-3">
+              <UserHeader />
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="hero">
+                    <Plus className="w-4 h-4" />
+                    Novo Agendamento
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px] mx-4">
                 <DialogHeader>
                   <DialogTitle>Novo Agendamento</DialogTitle>
                 </DialogHeader>
@@ -316,6 +319,7 @@ const Appointments = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </header>
 
           {/* Mobile Header */}

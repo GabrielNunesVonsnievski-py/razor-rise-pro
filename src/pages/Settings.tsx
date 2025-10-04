@@ -7,6 +7,7 @@ import { User, Bell, Clock, Palette, Shield } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useUserRole } from "@/hooks/useUserRole";
+import { UserHeader } from "@/components/UserHeader";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,9 +52,12 @@ const SettingsPage = () => {
                 <p className="text-sm text-muted-foreground">Personalize sua experiência</p>
               </div>
             </div>
-            <Button variant="hero">
-              Salvar Alterações
-            </Button>
+            <div className="flex items-center gap-3">
+              <UserHeader />
+              <Button variant="hero">
+                Salvar Alterações
+              </Button>
+            </div>
           </header>
 
           <div className="p-6">

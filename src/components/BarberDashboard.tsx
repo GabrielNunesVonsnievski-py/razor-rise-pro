@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { UserHeader } from "@/components/UserHeader";
 
 import { Calendar, Clock, Scissors, TrendingUp, Users, Star, Plus } from "lucide-react";
 
@@ -152,7 +153,8 @@ const BarberDashboard = () => {
                 <p className="text-sm text-muted-foreground">Bem-vindo de volta!</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
+              <UserHeader />
               <Button variant="outline" size="sm">
                 <Calendar className="w-4 h-4" />
                 Ver Agenda

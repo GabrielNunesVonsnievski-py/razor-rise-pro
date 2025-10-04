@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Tag, TrendingUp, Users, Plus, Edit, Trash2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { UserHeader } from "@/components/UserHeader";
 import { useBarbershop } from "@/hooks/useBarbershop";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -188,6 +189,7 @@ const Promotions = () => {
                 <p className="text-sm text-muted-foreground">Gerencie suas ofertas especiais</p>
               </div>
             </div>
+            <UserHeader />
           </header>
 
           <div className="p-6 space-y-6">

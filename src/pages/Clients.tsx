@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserHeader } from "@/components/UserHeader";
 import { Users, Phone, Mail, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -114,6 +115,7 @@ const Clients = () => {
                 <p className="text-sm text-muted-foreground">Gerencie seus clientes</p>
               </div>
             </div>
+            <UserHeader />
           </header>
 
           <div className="p-6 space-y-6">

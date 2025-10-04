@@ -5,7 +5,6 @@ import {
   TrendingUp, 
   Star, 
   Settings,
-  Scissors,
   LogOut
 } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
@@ -27,7 +26,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { useUserRole } from "@/hooks/useUserRole"
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home},
@@ -46,7 +44,6 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { canAccessSettings } = useUserRole()
   const currentPath = location.pathname
   const isCollapsed = !open
 
@@ -78,10 +75,7 @@ export function AppSidebar() {
     >
       <SidebarHeader className="border-b border-border/50">
         <div className="flex items-center gap-3 px-3 py-4">
-          <div className="w-8 h-8 bg-gradient-accent rounded-lg flex items-center justify-center">
-            <Scissors className="w-5 h-5 text-accent-foreground" />
-          </div>
-          <img src={winixLogo} alt="Winix" className="w-12 h-12" />
+          <img src={winixLogo} alt="Winix" className="w-10 h-10" />
           {!isCollapsed && (
             <div>
               <h2 className="font-bold text-lg text-primary">Winix</h2>
@@ -110,25 +104,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {canAccessSettings && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Sistema</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {settingsItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url}>
-                        <item.icon className="w-4 h-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        <SidebarGroup>
+          <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url}>
+                      <item.icon className="w-4 h-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/50">
