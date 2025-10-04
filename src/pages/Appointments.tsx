@@ -43,6 +43,8 @@ const Appointments = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]);
   const [barbershopId, setBarbershopId] = useState<number | null>(null);
+  const [completingAppointment, setCompletingAppointment] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>("dinheiro");
 
   const { toast } = useToast();
 
@@ -109,13 +111,13 @@ const Appointments = () => {
     fetchAppointments();
   }, [barbershopId]);
 
-  const handleUpdateStatus = async (appointmentId: string, newStatus: "completed" | "no_show") => {
+  const handleCompleteAppointment = async (appointmentId: string) => {
     const appointment = appointments.find(a => a.id === appointmentId);
     if (!appointment) return;
 
     const { error } = await supabase
       .from('appointments')
-      .update({ status: newStatus })
+      .update({ status: 'completed' })
       .eq('id', appointmentId);
 
     if (error) {
@@ -127,41 +129,57 @@ const Appointments = () => {
       return;
     }
 
-    // Se concluído, registrar nas finanças
-    if (newStatus === 'completed') {
-      const { data: barbershopData } = await supabase
-        .from('barbershops')
-        .select('id')
-        .eq('owner_id', userId)
-        .single();
-
-      if (barbershopData) {
-        await supabase
-          .from('financial_records')
-          .insert({
-            barbershop_id: barbershopData.id,
-            appointment_id: appointmentId,
-            tipo: 'receita',
-            valor: appointment.valor,
-            descricao: `Serviço: ${appointment.service} - Cliente: ${appointment.client}`,
-            metodo_pagamento: 'dinheiro' // Padrão, pode ser editado depois
-          });
-      }
-
-      toast({
-        title: 'Concluído!',
-        description: 'Agendamento marcado como concluído e registrado nas finanças.'
-      });
-    } else {
-      toast({
-        title: 'Status atualizado',
-        description: 'Agendamento marcado como "Não compareceu".'
-      });
+    // Registrar nas finanças com método de pagamento selecionado
+    if (barbershopId) {
+      await supabase
+        .from('financial_records')
+        .insert({
+          barbershop_id: barbershopId,
+          appointment_id: appointmentId,
+          tipo: 'receita',
+          valor: appointment.valor,
+          descricao: `Serviço: ${appointment.service} - Cliente: ${appointment.client}`,
+          metodo_pagamento: paymentMethod
+        });
     }
+
+    toast({
+      title: 'Concluído!',
+      description: 'Agendamento marcado como concluído e registrado nas finanças.'
+    });
 
     // Atualizar lista
     setAppointments(prev => 
-      prev.map(a => a.id === appointmentId ? { ...a, status: newStatus } : a)
+      prev.map(a => a.id === appointmentId ? { ...a, status: 'completed' } : a)
+    );
+
+    // Fechar dialog
+    setCompletingAppointment(null);
+    setPaymentMethod("dinheiro");
+  };
+
+  const handleNoShow = async (appointmentId: string) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'no_show' })
+      .eq('id', appointmentId);
+
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar o status.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    toast({
+      title: 'Status atualizado',
+      description: 'Agendamento marcado como "Não compareceu".'
+    });
+
+    setAppointments(prev => 
+      prev.map(a => a.id === appointmentId ? { ...a, status: 'no_show' } : a)
     );
   };
 
@@ -444,7 +462,7 @@ const Appointments = () => {
                           <Button 
                             size="sm" 
                             variant="default"
-                            onClick={() => handleUpdateStatus(appointment.id, 'completed')}
+                            onClick={() => setCompletingAppointment(appointment.id)}
                             className="text-xs"
                           >
                             Concluir
@@ -452,7 +470,7 @@ const Appointments = () => {
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => handleUpdateStatus(appointment.id, 'no_show')}
+                            onClick={() => handleNoShow(appointment.id)}
                             className="text-xs"
                           >
                             Não compareceu
@@ -464,6 +482,41 @@ const Appointments = () => {
                 ))}
               </CardContent>
             </Card>
+
+            {/* Dialog de Método de Pagamento */}
+            <Dialog open={!!completingAppointment} onOpenChange={() => setCompletingAppointment(null)}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Concluir Agendamento</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Selecione o método de pagamento usado pelo cliente:
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="payment-method">Método de Pagamento</Label>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o método" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="cartao">Cartão</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setCompletingAppointment(null)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={() => completingAppointment && handleCompleteAppointment(completingAppointment)}>
+                    Confirmar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </main>
       </div>

@@ -25,6 +25,9 @@ interface Barbershop {
   telefone: string | null;
   endereco: string | null;
   descricao: string | null;
+  horario_abertura?: string;
+  horario_fechamento?: string;
+  dias_funcionamento?: string[];
 }
 
 interface Promotion {
@@ -126,6 +129,30 @@ const PublicBooking = () => {
         variant: 'destructive'
       });
       return;
+    }
+
+    // Validar dia da semana
+    const dayOfWeek = selectedDate.day().toString();
+    if (barbershop?.dias_funcionamento && !barbershop.dias_funcionamento.includes(dayOfWeek)) {
+      toast({
+        title: 'Dia inválido',
+        description: 'A barbearia não funciona neste dia da semana.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validar horário de funcionamento
+    if (barbershop?.horario_abertura && barbershop?.horario_fechamento) {
+      const hora = formData.time;
+      if (hora < barbershop.horario_abertura || hora > barbershop.horario_fechamento) {
+        toast({
+          title: 'Horário inválido',
+          description: `A barbearia funciona das ${barbershop.horario_abertura} às ${barbershop.horario_fechamento}.`,
+          variant: 'destructive'
+        });
+        return;
+      }
     }
 
     setSubmitting(true);

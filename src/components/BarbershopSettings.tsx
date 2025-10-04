@@ -18,7 +18,10 @@ const BarbershopSettings = () => {
     slug: "",
     telefone: "",
     endereco: "",
-    descricao: ""
+    descricao: "",
+    horario_abertura: "09:00",
+    horario_fechamento: "18:00",
+    dias_funcionamento: ["1", "2", "3", "4", "5", "6"]
   });
 
   useEffect(() => {
@@ -28,7 +31,10 @@ const BarbershopSettings = () => {
         slug: barbershop.slug || "",
         telefone: barbershop.telefone || "",
         endereco: barbershop.endereco || "",
-        descricao: barbershop.descricao || ""
+        descricao: barbershop.descricao || "",
+        horario_abertura: (barbershop as any).horario_abertura?.slice(0, 5) || "09:00",
+        horario_fechamento: (barbershop as any).horario_fechamento?.slice(0, 5) || "18:00",
+        dias_funcionamento: (barbershop as any).dias_funcionamento || ["1", "2", "3", "4", "5", "6"]
       });
     }
   }, [barbershop]);
@@ -172,6 +178,57 @@ const BarbershopSettings = () => {
               placeholder="Barbearia premium com atendimento personalizado..."
               rows={3}
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="horario_abertura">Horário de Abertura</Label>
+              <Input
+                id="horario_abertura"
+                type="time"
+                value={formData.horario_abertura}
+                onChange={(e) => setFormData(prev => ({ ...prev, horario_abertura: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="horario_fechamento">Horário de Fechamento</Label>
+              <Input
+                id="horario_fechamento"
+                type="time"
+                value={formData.horario_fechamento}
+                onChange={(e) => setFormData(prev => ({ ...prev, horario_fechamento: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Dias de Funcionamento</Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "1", label: "Seg" },
+                { value: "2", label: "Ter" },
+                { value: "3", label: "Qua" },
+                { value: "4", label: "Qui" },
+                { value: "5", label: "Sex" },
+                { value: "6", label: "Sáb" },
+                { value: "0", label: "Dom" }
+              ].map((day) => (
+                <Button
+                  key={day.value}
+                  type="button"
+                  variant={formData.dias_funcionamento.includes(day.value) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    const dias = formData.dias_funcionamento.includes(day.value)
+                      ? formData.dias_funcionamento.filter(d => d !== day.value)
+                      : [...formData.dias_funcionamento, day.value];
+                    setFormData(prev => ({ ...prev, dias_funcionamento: dias }));
+                  }}
+                >
+                  {day.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <Button type="submit" className="w-full" variant="hero">
