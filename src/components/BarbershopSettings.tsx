@@ -81,7 +81,7 @@ const BarbershopSettings = () => {
   };
 
   const copyLink = () => {
-    const link = `${window.location.origin}/${formData.slug}`;
+    const link = `${window.location.origin}/b/${formData.slug}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     toast({
@@ -95,7 +95,7 @@ const BarbershopSettings = () => {
     return <div className="p-6">Carregando...</div>;
   }
 
-  const barbershopLink = formData.slug ? `${window.location.origin}/${formData.slug}` : "";
+  const barbershopLink = formData.slug ? `${window.location.origin}/b/${formData.slug}` : "";
 
   return (
     <Card className="shadow-elegant">

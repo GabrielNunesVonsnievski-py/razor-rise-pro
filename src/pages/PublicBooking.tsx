@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Scissors, ArrowLeft, Phone, User as UserIcon } from 'lucide-react';
+import { Calendar, Scissors, ArrowLeft, Phone, User as UserIcon, MapPin, Clock, Tag } from 'lucide-react';
 import InputMask from 'react-input-mask';
 import dayjs from 'dayjs';
 
@@ -46,6 +46,7 @@ const PublicBooking = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -264,6 +265,9 @@ const PublicBooking = () => {
       // Abrir WhatsApp em nova aba
       window.open(whatsappUrl, '_blank');
 
+      // Mostrar mensagem de sucesso
+      setBookingSuccess(true);
+
       // Limpar formulário
       setFormData({
         fullName: '',
@@ -295,41 +299,140 @@ const PublicBooking = () => {
   }
 
   if (!barbershop) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <Card className="max-w-md w-full text-center shadow-elegant">
+          <CardContent className="pt-6">
+            <Scissors className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Barbearia não encontrada</h2>
+            <p className="text-muted-foreground mb-6">
+              O link que você acessou não corresponde a nenhuma barbearia cadastrada.
+            </p>
+            <Link to="/">
+              <Button variant="hero">Voltar para a página inicial</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
+
+  const googleMapsUrl = barbershop.endereco 
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(barbershop.endereco)}`
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Hero Section - Perfil da Barbearia */}
       <section className="gradient-hero text-accent-foreground py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <Link to="/" className="inline-flex items-center gap-2 text-accent-foreground/80 hover:text-accent-foreground transition-colors mb-4">
+        <div className="max-w-6xl mx-auto">
+          <Link to="/" className="inline-flex items-center gap-2 text-accent-foreground/80 hover:text-accent-foreground transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </Link>
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {barbershop.nome}
-          </h1>
-          <p className="text-xl opacity-90">
-            {barbershop.descricao || 'Agende seu horário'}
-          </p>
-          {barbershop.endereco && (
-            <p className="text-sm opacity-75 mt-2">{barbershop.endereco}</p>
-          )}
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Informações principais */}
+            <div>
+              <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                {barbershop.nome}
+              </h1>
+              <p className="text-xl opacity-90 mb-6">
+                {barbershop.descricao || 'Agende seu horário conosco!'}
+              </p>
+
+              {/* Informações de contato e localização */}
+              <div className="space-y-3">
+                {barbershop.endereco && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="opacity-90">{barbershop.endereco}</p>
+                      {googleMapsUrl && (
+                        <a 
+                          href={googleMapsUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm underline opacity-75 hover:opacity-100 transition-opacity"
+                        >
+                          Ver no Google Maps
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {barbershop.telefone && (
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 flex-shrink-0" />
+                    <p className="opacity-90">{barbershop.telefone}</p>
+                  </div>
+                )}
+                
+                {barbershop.horario_abertura && barbershop.horario_fechamento && (
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-5 h-5 flex-shrink-0" />
+                    <p className="opacity-90">
+                      {barbershop.horario_abertura} - {barbershop.horario_fechamento}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Promoções em destaque */}
+            {promotions.length > 0 && (
+              <div className="bg-background/10 backdrop-blur-sm rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Tag className="w-5 h-5" />
+                  <h3 className="text-xl font-bold">Promoções Ativas</h3>
+                </div>
+                <div className="space-y-3">
+                  {promotions.map((promo) => (
+                    <div key={promo.id} className="bg-accent/20 rounded-lg p-4">
+                      <h4 className="font-semibold text-lg">{promo.titulo}</h4>
+                      <p className="text-2xl font-bold">{promo.desconto}% OFF</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto p-6 space-y-8 -mt-8">
-        {/* Booking Form */}
+      <div className="max-w-6xl mx-auto p-6 space-y-8 -mt-8">
+        {/* Seção de Agendamento */}
         <Card className="shadow-elegant">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
-              <Scissors className="w-6 h-6 text-accent" />
-              Agendar Horário
+              <Calendar className="w-6 h-6 text-accent" />
+              {bookingSuccess ? 'Agendamento Confirmado!' : 'Agende Seu Horário'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {bookingSuccess ? (
+              <div className="text-center space-y-6 py-8">
+                <div className="w-20 h-20 mx-auto bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                  <Scissors className="w-10 h-10 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">Agendamento salvo com sucesso!</h3>
+                  <p className="text-muted-foreground">
+                    Você receberá uma confirmação no WhatsApp com todos os detalhes.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setBookingSuccess(false)} 
+                  variant="hero" 
+                  size="lg"
+                  className="w-full"
+                >
+                  Fazer Outro Agendamento
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Nome Completo</Label>
@@ -435,10 +538,11 @@ const PublicBooking = () => {
                 </div>
               </div>
 
-              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={submitting}>
-                {submitting ? 'Agendando...' : 'Confirmar Agendamento'}
-              </Button>
-            </form>
+                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={submitting}>
+                  {submitting ? 'Agendando...' : 'Confirmar Agendamento'}
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
 
