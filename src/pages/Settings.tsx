@@ -10,6 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { UserHeader } from "@/components/UserHeader";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BarbershopSettings from "@/components/BarbershopSettings";
 import ServicesManagement from "@/components/ServicesManagement";
@@ -18,11 +19,18 @@ const SettingsPage = () => {
   const { canAccessSettings, loading } = useUserRole();
   const navigate = useNavigate();
 
+  const { toast } = useToast();
+
   useEffect(() => {
     if (!loading && !canAccessSettings) {
+      toast({
+        title: "Acesso negado",
+        description: "Você não tem permissão para acessar esta página.",
+        variant: "destructive",
+      });
       navigate('/dashboard');
     }
-  }, [canAccessSettings, loading, navigate]);
+  }, [canAccessSettings, loading, navigate, toast]);
 
   if (loading) {
     return (
