@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: "Winix <onboarding@resend.dev>",
+      from: "Winix Barbearia <noreply@winixbarbearia.com.br>",
       to: [to],
       subject: subject,
       html: body,
