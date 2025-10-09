@@ -220,6 +220,12 @@ const Auth = () => {
             description: "Este email já está cadastrado. Tente fazer login.",
             variant: "destructive",
           });
+        } else if (error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('email rate limit exceeded')) {
+          toast({
+            title: "Muitas tentativas",
+            description: "Você atingiu o limite de emails. Aguarde 1 hora e tente novamente, ou verifique sua caixa de entrada para confirmar o cadastro existente.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Erro no Cadastro",
