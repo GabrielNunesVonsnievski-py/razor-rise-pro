@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,65 +48,15 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error creating email log:', logError);
     }
 
-    // Send email via SMTP
-    const smtpHost = Deno.env.get('SMTP_HOST');
-    const smtpPort = Deno.env.get('SMTP_PORT');
-    const smtpUser = Deno.env.get('SMTP_USER');
-    const smtpPassword = Deno.env.get('SMTP_PASSWORD');
-    const smtpFromEmail = Deno.env.get('SMTP_FROM_EMAIL');
-    const smtpFromName = Deno.env.get('SMTP_FROM_NAME');
-
-    if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword) {
-      throw new Error('SMTP configuration is incomplete');
-    }
-
-    // Connect to SMTP server
-    const conn = await Deno.connect({
-      hostname: smtpHost,
-      port: parseInt(smtpPort),
+    // Send email via Resend
+    const emailResponse = await resend.emails.send({
+      from: "Winix <onboarding@resend.dev>",
+      to: [to],
+      subject: subject,
+      html: body,
     });
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    // Helper to read response
-    const readResponse = async () => {
-      const buffer = new Uint8Array(1024);
-      const n = await conn.read(buffer);
-      return decoder.decode(buffer.subarray(0, n || 0));
-    };
-
-    // Helper to send command
-    const sendCommand = async (command: string) => {
-      await conn.write(encoder.encode(command + '\r\n'));
-      return await readResponse();
-    };
-
-    // SMTP conversation
-    await readResponse(); // Read greeting
-    await sendCommand(`EHLO ${smtpHost}`);
-    await sendCommand('AUTH LOGIN');
-    await sendCommand(btoa(smtpUser));
-    await sendCommand(btoa(smtpPassword));
-    await sendCommand(`MAIL FROM:<${smtpFromEmail}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand('DATA');
-    
-    const emailContent = [
-      `From: ${smtpFromName} <${smtpFromEmail}>`,
-      `To: ${to}`,
-      `Subject: ${subject}`,
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      body,
-      '.',
-    ].join('\r\n');
-    
-    await sendCommand(emailContent);
-    await sendCommand('QUIT');
-    conn.close();
-
-    console.log('Email sent successfully');
+    console.log('Email sent successfully:', emailResponse);
 
     // Update log status
     if (logData) {
@@ -128,6 +81,12 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error('Error sending email:', error);
+
+    // Update log status to failed if we have a log entry
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     return new Response(
       JSON.stringify({ error: error.message }),
