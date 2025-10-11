@@ -6,28 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Email providers configuration
-const PROVIDERS = {
-  resend: {
-    name: 'Resend API',
-    apiKey: Deno.env.get('RESEND_API_KEY'),
-    domain: 'winixbarbearia.com.br',
-  },
-  smtp: {
-    name: 'SMTP',
-    host: Deno.env.get('SMTP_HOST'),
-    port: parseInt(Deno.env.get('SMTP_PORT') || '587'),
-    user: Deno.env.get('SMTP_USER'),
-    password: Deno.env.get('SMTP_PASSWORD'),
-    from: Deno.env.get('SMTP_FROM_EMAIL'),
-    fromName: Deno.env.get('SMTP_FROM_NAME'),
-  }
-};
-
-const RETRY_CONFIG = {
-  maxAttempts: 3,
-  backoffSeconds: [2, 6, 18],
-};
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const RESEND_FROM = 'winix@resend.dev';
 
 interface EmailRequest {
   to: string;
@@ -51,9 +31,6 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-async function sleep(seconds: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-}
 
 async function logEmail(log: EmailLog): Promise<void> {
   try {
@@ -72,24 +49,25 @@ async function logEmail(log: EmailLog): Promise<void> {
   }
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
-  const { apiKey, domain } = PROVIDERS.resend;
-  
-  if (!apiKey) {
+async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
+  if (!RESEND_API_KEY) {
+    console.error('[Resend] API key not configured');
     return { success: false, error: 'Resend API key not configured' };
   }
 
   try {
-    console.log(`[Resend] Attempting to send email to ${to}`);
+    console.log(`[Resend] Sending email to ${to}`);
+    console.log(`[Resend] From: ${RESEND_FROM}`);
+    console.log(`[Resend] Subject: ${subject}`);
     
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Winix Barbearia <noreply@${domain}>`,
+        from: RESEND_FROM,
         to: [to],
         subject: subject,
         html: html,
@@ -117,136 +95,6 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   }
 }
 
-async function sendViaSMTP(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
-  const { host, port, user, password, from, fromName } = PROVIDERS.smtp;
-  
-  if (!host || !user || !password || !from) {
-    return { success: false, error: 'SMTP not fully configured' };
-  }
-
-  try {
-    console.log(`[SMTP] Attempting to send email to ${to} via ${host}:${port}`);
-    
-    // Using a simple SMTP implementation via nodemailer-like approach
-    // For production, consider using a proper SMTP library
-    const conn = await Deno.connect({ hostname: host, port: port });
-    
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    async function writeLine(line: string) {
-      await conn.write(encoder.encode(line + '\r\n'));
-    }
-
-    async function readResponse(): Promise<string> {
-      const buf = new Uint8Array(1024);
-      const n = await conn.read(buf);
-      return decoder.decode(buf.subarray(0, n || 0));
-    }
-
-    // SMTP handshake
-    await readResponse(); // Welcome message
-    await writeLine(`EHLO ${host}`);
-    await readResponse();
-    
-    await writeLine('STARTTLS');
-    await readResponse();
-    
-    // TLS upgrade would go here in production
-    // For now, we'll use basic auth
-    
-    await writeLine('AUTH LOGIN');
-    await readResponse();
-    await writeLine(btoa(user));
-    await readResponse();
-    await writeLine(btoa(password));
-    const authResponse = await readResponse();
-    
-    if (!authResponse.startsWith('235')) {
-      conn.close();
-      return { success: false, error: 'SMTP authentication failed' };
-    }
-
-    await writeLine(`MAIL FROM:<${from}>`);
-    await readResponse();
-    await writeLine(`RCPT TO:<${to}>`);
-    await readResponse();
-    await writeLine('DATA');
-    await readResponse();
-    
-    const message = [
-      `From: ${fromName} <${from}>`,
-      `To: ${to}`,
-      `Subject: ${subject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      html,
-      '.',
-    ].join('\r\n');
-    
-    await writeLine(message);
-    await readResponse();
-    await writeLine('QUIT');
-    conn.close();
-
-    console.log('[SMTP] Email sent successfully');
-    return { success: true };
-  } catch (error) {
-    console.error('[SMTP] Exception:', error);
-    return { 
-      success: false, 
-      error: `SMTP exception: ${error.message}` 
-    };
-  }
-}
-
-async function sendEmailWithRetry(emailData: EmailRequest): Promise<{ success: boolean; error?: string; provider?: string }> {
-  const { to, subject, html = '', text = '' } = emailData;
-  const finalHtml = html || `<p>${text}</p>`;
-
-  // Try Resend first (faster and more reliable)
-  for (let attempt = 0; attempt < RETRY_CONFIG.maxAttempts; attempt++) {
-    if (attempt > 0) {
-      const backoff = RETRY_CONFIG.backoffSeconds[attempt - 1];
-      console.log(`[Retry] Waiting ${backoff}s before attempt ${attempt + 1}`);
-      await sleep(backoff);
-    }
-
-    console.log(`[Attempt ${attempt + 1}/${RETRY_CONFIG.maxAttempts}] Trying Resend...`);
-    const resendResult = await sendViaResend(to, subject, finalHtml);
-    
-    if (resendResult.success) {
-      return { success: true, provider: 'Resend API' };
-    }
-    
-    console.log(`[Resend Failed] ${resendResult.error}`);
-  }
-
-  // Fallback to SMTP
-  console.log('[Fallback] Switching to SMTP provider...');
-  for (let attempt = 0; attempt < RETRY_CONFIG.maxAttempts; attempt++) {
-    if (attempt > 0) {
-      const backoff = RETRY_CONFIG.backoffSeconds[attempt - 1];
-      console.log(`[Retry] Waiting ${backoff}s before attempt ${attempt + 1}`);
-      await sleep(backoff);
-    }
-
-    console.log(`[Attempt ${attempt + 1}/${RETRY_CONFIG.maxAttempts}] Trying SMTP...`);
-    const smtpResult = await sendViaSMTP(to, subject, finalHtml);
-    
-    if (smtpResult.success) {
-      return { success: true, provider: 'SMTP' };
-    }
-    
-    console.log(`[SMTP Failed] ${smtpResult.error}`);
-  }
-
-  return { 
-    success: false, 
-    error: 'All email providers failed after retries',
-  };
-}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -266,8 +114,10 @@ serve(async (req) => {
 
     console.log(`[Email Request] To: ${to}, Subject: ${subject}, Test: ${isTest || false}`);
 
-    // Send email with retry and fallback
-    const result = await sendEmailWithRetry({ to, subject, html, text, barbershop_id });
+    const finalHtml = html || `<p>${text || ''}</p>`;
+    
+    // Send email
+    const result = await sendEmail(to, subject, finalHtml);
 
     // Log the result
     await logEmail({
@@ -283,7 +133,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: 'Email sent successfully',
-          provider: result.provider,
+          provider: 'Resend',
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -292,7 +142,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: result.error,
-          message: 'Failed to send email after all retry attempts',
+          message: 'Failed to send email',
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
