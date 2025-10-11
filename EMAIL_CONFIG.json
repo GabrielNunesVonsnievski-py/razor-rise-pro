@@ -1,0 +1,344 @@
+{
+  "project_info": {
+    "name": "Winix Barbearia Email System",
+    "domain": "winixbarbearia.com.br",
+    "supabase_project_id": "vsndzgdvpedvrotcdbgz",
+    "configuration_date": "2025-10-11"
+  },
+  "providers": {
+    "primary": {
+      "name": "Resend API",
+      "type": "api",
+      "endpoint": "https://api.resend.com/emails",
+      "from_email": "noreply@winixbarbearia.com.br",
+      "from_name": "Winix Barbearia",
+      "api_key_secret": "RESEND_API_KEY",
+      "status": "configured",
+      "features": {
+        "speed": "fast",
+        "reliability": "high",
+        "rate_limit": "100/day (free tier)",
+        "cost": "free for 100 emails/day, then $0.001/email"
+      }
+    },
+    "fallback": {
+      "name": "SMTP",
+      "type": "smtp",
+      "host_secret": "SMTP_HOST",
+      "port_secret": "SMTP_PORT",
+      "port_recommended": 587,
+      "user_secret": "SMTP_USER",
+      "password_secret": "SMTP_PASSWORD",
+      "from_email_secret": "SMTP_FROM_EMAIL",
+      "from_name_secret": "SMTP_FROM_NAME",
+      "tls": true,
+      "status": "configured",
+      "features": {
+        "speed": "medium",
+        "reliability": "medium-high",
+        "rate_limit": "depends on provider",
+        "cost": "depends on provider"
+      }
+    }
+  },
+  "retry_policy": {
+    "enabled": true,
+    "max_attempts": 3,
+    "backoff_strategy": "exponential",
+    "backoff_seconds": [2, 6, 18],
+    "fallback_enabled": true,
+    "fallback_after_attempts": 3
+  },
+  "dns_configuration": {
+    "domain": "winixbarbearia.com.br",
+    "required_records": [
+      {
+        "type": "TXT",
+        "name": "@",
+        "value": "v=spf1 include:_spf.resend.com ~all",
+        "purpose": "SPF - Authorizes Resend to send emails",
+        "priority": "critical",
+        "ttl": 3600
+      },
+      {
+        "type": "CNAME",
+        "name": "resend._domainkey",
+        "value": "resend._domainkey.resend.com",
+        "purpose": "DKIM - Email signature verification",
+        "priority": "critical",
+        "ttl": 3600,
+        "note": "Get exact value from Resend dashboard at https://resend.com/domains"
+      },
+      {
+        "type": "TXT",
+        "name": "_dmarc",
+        "value": "v=DMARC1; p=none; rua=mailto:admin@winixbarbearia.com.br",
+        "purpose": "DMARC - Email authentication policy",
+        "priority": "high",
+        "ttl": 3600
+      }
+    ],
+    "verification_tools": [
+      {
+        "name": "MXToolbox SPF",
+        "url": "https://mxtoolbox.com/spf.aspx"
+      },
+      {
+        "name": "MXToolbox DKIM",
+        "url": "https://mxtoolbox.com/dkim.aspx"
+      },
+      {
+        "name": "MXToolbox DMARC",
+        "url": "https://mxtoolbox.com/dmarc.aspx"
+      },
+      {
+        "name": "Mail Tester",
+        "url": "https://www.mail-tester.com/"
+      }
+    ],
+    "propagation_time": "1-48 hours (typically 1-2 hours)"
+  },
+  "edge_functions": {
+    "send-email": {
+      "path": "supabase/functions/send-email",
+      "url": "https://vsndzgdvpedvrotcdbgz.supabase.co/functions/v1/send-email",
+      "authentication": "none (public)",
+      "jwt_verification": false,
+      "features": [
+        "Multi-provider support (Resend + SMTP)",
+        "Automatic retry with exponential backoff",
+        "Automatic fallback between providers",
+        "Database logging to email_logs table",
+        "CORS enabled for frontend calls",
+        "Idempotency support"
+      ],
+      "request_format": {
+        "to": "string (required)",
+        "subject": "string (required)",
+        "html": "string (optional)",
+        "text": "string (optional)",
+        "isTest": "boolean (optional)",
+        "barbershop_id": "number (optional)"
+      },
+      "response_format": {
+        "success": "boolean",
+        "message": "string",
+        "provider": "string (Resend API | SMTP)",
+        "error": "string (if failed)"
+      }
+    },
+    "email-test": {
+      "path": "supabase/functions/email-test",
+      "url": "https://vsndzgdvpedvrotcdbgz.supabase.co/functions/v1/email-test",
+      "authentication": "required",
+      "jwt_verification": true,
+      "features": [
+        "Administrative test endpoint",
+        "Calls send-email function",
+        "Returns detailed logs",
+        "Protected by JWT authentication"
+      ],
+      "request_format": {
+        "testEmail": "string (required)"
+      },
+      "response_format": {
+        "success": "boolean",
+        "message": "string",
+        "result": "object",
+        "logs": "string",
+        "error": "string (if failed)"
+      }
+    }
+  },
+  "database_logging": {
+    "enabled": true,
+    "table": "email_logs",
+    "columns": {
+      "id": "uuid (primary key)",
+      "recipient_email": "text (not null)",
+      "subject": "text (not null)",
+      "status": "text (sent|failed|queued)",
+      "error_message": "text (nullable)",
+      "sent_at": "timestamp with time zone (nullable)",
+      "created_at": "timestamp with time zone (not null)",
+      "barbershop_id": "integer (nullable)"
+    },
+    "retention_policy": "recommend implementing after 6 months",
+    "analytics_available": true
+  },
+  "security": {
+    "secrets_storage": "Supabase Secrets (encrypted)",
+    "api_keys_redacted_in_logs": true,
+    "cors_enabled": true,
+    "cors_origin": "*",
+    "rate_limiting": "provider-dependent",
+    "input_validation": "enabled",
+    "sql_injection_protection": "enabled (using Supabase client)"
+  },
+  "monitoring": {
+    "logs_location": "https://supabase.com/dashboard/project/vsndzgdvpedvrotcdbgz/functions/send-email/logs",
+    "database_logs": "email_logs table",
+    "recommended_alerts": [
+      "More than 5 failures in 1 hour",
+      "Error rate > 20%",
+      "No emails sent in 24 hours (if expected)",
+      "Provider API key expiring soon"
+    ],
+    "metrics_to_track": [
+      "Total emails sent",
+      "Success rate by provider",
+      "Average delivery time",
+      "Retry frequency",
+      "Fallback activation rate",
+      "Error types distribution"
+    ]
+  },
+  "testing": {
+    "admin_interface": {
+      "url": "/email-test",
+      "authentication": "required",
+      "features": [
+        "Send test emails",
+        "View real-time logs",
+        "DNS configuration instructions",
+        "System status overview"
+      ]
+    },
+    "api_testing": {
+      "method": "POST",
+      "url": "https://vsndzgdvpedvrotcdbgz.supabase.co/functions/v1/email-test",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer YOUR_JWT_TOKEN"
+      },
+      "body": {
+        "testEmail": "your@email.com"
+      }
+    },
+    "recommended_tests": [
+      "Send to Gmail account",
+      "Send to Outlook/Hotmail account",
+      "Send to corporate email",
+      "Check spam folder",
+      "Verify email headers",
+      "Test during peak hours",
+      "Test with different content (links, images, etc.)"
+    ]
+  },
+  "cost_estimation": {
+    "resend_free_tier": {
+      "emails_per_day": 100,
+      "emails_per_month": 3000,
+      "cost": "$0"
+    },
+    "resend_paid": {
+      "cost_per_email": "$0.001",
+      "example_1000_emails": "$1",
+      "example_10000_emails": "$10"
+    },
+    "smtp_provider": {
+      "cost": "varies by provider",
+      "note": "Check your SMTP provider's pricing"
+    }
+  },
+  "troubleshooting": {
+    "common_errors": {
+      "domain_not_verified": {
+        "error": "Resend API error: Domain not verified",
+        "solution": [
+          "Add DNS records (SPF, DKIM, DMARC)",
+          "Verify domain in Resend dashboard",
+          "Wait for DNS propagation (up to 48h)"
+        ]
+      },
+      "smtp_auth_failed": {
+        "error": "SMTP authentication failed",
+        "solution": [
+          "Verify SMTP credentials in Supabase Secrets",
+          "Check username/password are correct",
+          "Ensure SMTP provider allows connections"
+        ]
+      },
+      "rate_limit_exceeded": {
+        "error": "Rate limit exceeded",
+        "solution": [
+          "System automatically retries with backoff",
+          "Wait 1 hour if Supabase Auth rate limit",
+          "Consider disabling email confirmation temporarily",
+          "Upgrade to paid plan if consistently hitting limits"
+        ]
+      },
+      "emails_to_spam": {
+        "error": "Emails going to spam folder",
+        "solution": [
+          "Verify ALL DNS records (SPF, DKIM, DMARC)",
+          "Use https://www.mail-tester.com/ for diagnosis",
+          "Warm up domain (send gradually increasing volume)",
+          "Add unsubscribe link",
+          "Avoid spam trigger words",
+          "Use proper email authentication"
+        ]
+      }
+    }
+  },
+  "deployment": {
+    "status": "ready",
+    "auto_deploy": true,
+    "deployment_trigger": "git push",
+    "edge_functions_deployed": true,
+    "secrets_configured": true
+  },
+  "next_steps_checklist": [
+    {
+      "step": 1,
+      "task": "Add DNS records (SPF, DKIM, DMARC)",
+      "priority": "CRITICAL",
+      "estimated_time": "15 minutes",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "task": "Verify domain in Resend dashboard",
+      "priority": "CRITICAL",
+      "estimated_time": "5 minutes",
+      "status": "pending",
+      "url": "https://resend.com/domains"
+    },
+    {
+      "step": 3,
+      "task": "Wait for DNS propagation",
+      "priority": "HIGH",
+      "estimated_time": "1-48 hours",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "task": "Test via /email-test page",
+      "priority": "HIGH",
+      "estimated_time": "5 minutes",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "task": "Verify logs in Supabase",
+      "priority": "MEDIUM",
+      "estimated_time": "5 minutes",
+      "status": "pending",
+      "url": "https://supabase.com/dashboard/project/vsndzgdvpedvrotcdbgz/functions/send-email/logs"
+    },
+    {
+      "step": 6,
+      "task": "Monitor delivery rate for 7 days",
+      "priority": "MEDIUM",
+      "estimated_time": "ongoing",
+      "status": "pending"
+    }
+  ],
+  "success_metrics": {
+    "delivery_rate": ">95%",
+    "average_delivery_time": "<5 seconds",
+    "error_rate": "<5%",
+    "fallback_activation_rate": "<10%",
+    "user_satisfaction": "no complaints about missing emails"
+  }
+}

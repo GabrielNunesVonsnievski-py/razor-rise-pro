@@ -15,6 +15,7 @@ import Financial from "./pages/Financial";
 import Promotions from "./pages/Promotions";
 import Settings from "./pages/Settings";
 import PublicBooking from "./pages/PublicBooking";
+import EmailTest from "./pages/EmailTest";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/financial" element={<Financial />} />  
           <Route path="/promotions" element={<Promotions />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/email-test" element={<EmailTest />} />
           <Route path="/barbearia/:slug" element={<PublicBooking />} />
           <Route path="/b/:slug" element={<PublicBooking />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
