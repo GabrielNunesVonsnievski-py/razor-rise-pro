@@ -7,16 +7,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Scissors, ArrowLeft, Phone, User as UserIcon, MapPin, Clock, Tag } from 'lucide-react';
+import { Calendar, Scissors, ArrowLeft, Phone, User as UserIcon, MapPin, Clock, Tag, Users } from 'lucide-react';
 import InputMask from 'react-input-mask';
 import dayjs from 'dayjs';
 import { z } from 'zod';
+import { TimeSlotSelector } from '@/components/TimeSlotSelector';
+import {
+  generateTimeSlots,
+  getAvailableTimeSlots,
+  getOccupiedSlots,
+  TimeSlot
+} from '@/utils/timeSlots';
 
 interface Service {
   id: number;
   nome: string;
   valor: number;
   duracao: number;
+}
+
+interface Barber {
+  id: number;
+  nome: string;
+  status: string;
 }
 
 interface Barbershop {
@@ -26,9 +39,15 @@ interface Barbershop {
   telefone: string | null;
   endereco: string | null;
   descricao: string | null;
-  horario_abertura?: string;
-  horario_fechamento?: string;
-  dias_funcionamento?: string[];
+}
+
+interface BarbershopSchedule {
+  id: number;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fim: string;
+  intervalo_inicio: string | null;
+  intervalo_fim: string | null;
 }
 
 interface Promotion {
@@ -44,24 +63,28 @@ const PublicBooking = () => {
   
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [schedules, setSchedules] = useState<BarbershopSchedule[]>([]);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     serviceId: '',
-    promotionId: '',
+    barberId: '',
     date: '',
     time: ''
   });
 
+  const selectedService = services.find(s => s.id === parseInt(formData.serviceId));
+
   useEffect(() => {
     const fetchBarbershopData = async () => {
       try {
-        // Buscar barbearia pelo slug
         const { data: barbershopData, error: barbershopError } = await supabase
           .from('barbershops')
           .select('*')
@@ -80,7 +103,7 @@ const PublicBooking = () => {
 
         setBarbershop(barbershopData);
 
-        // Buscar serviços da barbearia
+        // Buscar serviços
         const { data: servicesData } = await supabase
           .from('services')
           .select('*')
@@ -88,6 +111,24 @@ const PublicBooking = () => {
           .eq('ativo', true);
 
         setServices(servicesData || []);
+
+        // Buscar barbeiros ativos
+        const { data: barbersData } = await supabase
+          .from('barbers')
+          .select('*')
+          .eq('barbershop_id', barbershopData.id)
+          .eq('status', 'ativo');
+
+        setBarbers(barbersData || []);
+
+        // Buscar horários configurados
+        const { data: schedulesData } = await supabase
+          .from('barbershop_schedules')
+          .select('*')
+          .eq('barbershop_id', barbershopData.id)
+          .eq('ativo', true);
+
+        setSchedules(schedulesData || []);
 
         // Buscar promoções ativas
         const { data: promotionsData } = await supabase
@@ -110,10 +151,84 @@ const PublicBooking = () => {
     }
   }, [slug]);
 
+  // Atualizar slots disponíveis quando data, serviço ou barbeiro mudam
+  useEffect(() => {
+    const loadAvailableSlots = async () => {
+      if (!formData.date || !barbershop?.id || !selectedService) {
+        setAvailableSlots([]);
+        return;
+      }
+
+      const selectedDate = dayjs(formData.date);
+      const dayOfWeek = selectedDate.day();
+
+      // Buscar horário configurado para este dia da semana
+      const daySchedule = schedules.find(s => s.dia_semana === dayOfWeek);
+
+      if (!daySchedule) {
+        setAvailableSlots([]);
+        toast({
+          title: 'Dia não disponível',
+          description: 'A barbearia não funciona neste dia da semana.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Gerar todos os slots de 30 minutos possíveis
+      const allSlots = generateTimeSlots(
+        daySchedule.hora_inicio,
+        daySchedule.hora_fim,
+        daySchedule.intervalo_inicio || undefined,
+        daySchedule.intervalo_fim || undefined
+      );
+
+      // Buscar agendamentos já existentes
+      let query = supabase
+        .from('appointments')
+        .select('time')
+        .eq('barbershop_id', barbershop.id)
+        .eq('date', formData.date)
+        .in('status', ['pending', 'confirmed']);
+
+      // Se um barbeiro foi selecionado, filtrar por ele
+      if (formData.barberId) {
+        query = query.eq('barber_id', parseInt(formData.barberId));
+      }
+
+      const { data: existingAppointments } = await query;
+
+      // Buscar todos os horários ocupados considerando duração dos serviços
+      const bookedTimes = new Set<string>();
+      
+      if (existingAppointments) {
+        for (const appointment of existingAppointments) {
+          // Para cada agendamento, marcar também os slots seguintes se o serviço for longo
+          const occupiedSlots = getOccupiedSlots(
+            appointment.time,
+            selectedService.duracao,
+            allSlots
+          );
+          occupiedSlots.forEach(slot => bookedTimes.add(slot));
+        }
+      }
+
+      // Calcular slots disponíveis considerando a duração do serviço selecionado
+      const available = getAvailableTimeSlots(
+        allSlots,
+        Array.from(bookedTimes),
+        selectedService.duracao
+      );
+
+      setAvailableSlots(available);
+    };
+
+    loadAvailableSlots();
+  }, [formData.date, formData.serviceId, formData.barberId, selectedService, schedules]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Schema de validação com Zod
     const bookingSchema = z.object({
       fullName: z.string()
         .trim()
@@ -124,11 +239,11 @@ const PublicBooking = () => {
         .trim()
         .regex(/^\(\d{2}\)\s?\d{4,5}-?\d{4}$/, 'Telefone inválido'),
       serviceId: z.string().min(1, 'Selecione um serviço'),
+      barberId: z.string().min(1, 'Selecione um barbeiro'),
       date: z.string().min(1, 'Selecione uma data'),
       time: z.string().min(1, 'Selecione um horário')
     });
 
-    // Validação dos dados
     const validation = bookingSchema.safeParse(formData);
     if (!validation.success) {
       toast({
@@ -138,17 +253,7 @@ const PublicBooking = () => {
       });
       return;
     }
-    
-    if (!formData.fullName || !formData.phone || !formData.serviceId || !formData.date || !formData.time) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha todos os campos para continuar.',
-        variant: 'destructive'
-      });
-      return;
-    }
 
-    // Validar data (não permitir datas passadas)
     const selectedDate = dayjs(`${formData.date} ${formData.time}`);
     if (selectedDate.isBefore(dayjs())) {
       toast({
@@ -159,58 +264,13 @@ const PublicBooking = () => {
       return;
     }
 
-    // Validar dia da semana
-    const dayOfWeek = selectedDate.day().toString();
-    if (barbershop?.dias_funcionamento && !barbershop.dias_funcionamento.includes(dayOfWeek)) {
-      toast({
-        title: 'Dia inválido',
-        description: 'A barbearia não funciona neste dia da semana.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    // Validar horário de funcionamento
-    if (barbershop?.horario_abertura && barbershop?.horario_fechamento) {
-      const hora = formData.time;
-      if (hora < barbershop.horario_abertura || hora > barbershop.horario_fechamento) {
-        toast({
-          title: 'Horário inválido',
-          description: `A barbearia funciona das ${barbershop.horario_abertura} às ${barbershop.horario_fechamento}.`,
-          variant: 'destructive'
-        });
-        return;
-      }
-    }
-
     setSubmitting(true);
 
     try {
-      // Verificar conflito de horário
-      const { data: existingAppointments } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('barbershop_id', barbershop?.id)
-        .eq('date', formData.date)
-        .eq('time', formData.time)
-        .in('status', ['pending', 'confirmed']);
-
-      if (existingAppointments && existingAppointments.length > 0) {
-        toast({
-          title: 'Horário indisponível',
-          description: 'Este horário já está reservado. Escolha outro.',
-          variant: 'destructive'
-        });
-        setSubmitting(false);
-        return;
-      }
-
-      // Verificar se usuário está autenticado
       const { data: { user } } = await supabase.auth.getUser();
-      
       let userId = user?.id;
 
-      // Se não estiver autenticado, criar conta automaticamente
+      // Auto-criar conta se não autenticado
       if (!user) {
         const tempEmail = `${formData.phone.replace(/\D/g, '')}@temp.winix.app`;
         const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
@@ -227,15 +287,10 @@ const PublicBooking = () => {
         });
 
         if (signUpError) {
-          // Tentar fazer login caso o usuário já exista
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          const { data: signInData } = await supabase.auth.signInWithPassword({
             email: tempEmail,
             password: tempPassword
           });
-
-          if (signInError) {
-            throw new Error('Não foi possível autenticar. Tente novamente.');
-          }
           userId = signInData.user?.id;
         } else {
           userId = signUpData.user?.id;
@@ -246,7 +301,6 @@ const PublicBooking = () => {
         throw new Error('Não foi possível identificar o usuário.');
       }
 
-      // Buscar valor do serviço
       const service = services.find(s => s.id === parseInt(formData.serviceId));
       
       // Criar agendamento
@@ -255,6 +309,7 @@ const PublicBooking = () => {
         .insert({
           barbershop_id: barbershop?.id,
           user_id: userId,
+          barber_id: parseInt(formData.barberId),
           client: formData.fullName,
           phone: formData.phone,
           service_id: parseInt(formData.serviceId),
@@ -267,26 +322,22 @@ const PublicBooking = () => {
 
       if (error) throw error;
 
-      // Adicionar cliente à barbearia (ignorar se já existir)
-      const { error: clientError } = await supabase
+      // Adicionar cliente
+      await supabase
         .from('barbershop_clients')
         .insert({
           barbershop_id: barbershop?.id,
           client_user_id: userId
-        });
+        })
+        .select()
+        .maybeSingle();
 
-      // Ignorar erro de duplicata
-      if (clientError && !clientError.message.includes('duplicate')) {
-        // Log silencioso - não expor detalhes do erro
-      }
-
-      // Sanitizar dados para WhatsApp (já validados pelo Zod)
+      const barberName = barbers.find(b => b.id === parseInt(formData.barberId))?.nome || 'Barbeiro';
       const sanitizedName = formData.fullName.trim().slice(0, 100);
       const sanitizedService = service?.nome?.trim().slice(0, 100) || 'Serviço';
       const sanitizedBarbershop = barbershop?.nome?.trim().slice(0, 100) || 'Barbearia';
       
-      // Enviar confirmação por WhatsApp
-      const whatsappMessage = `Olá ${sanitizedName}! Seu agendamento foi confirmado!\n\nBarbearia: ${sanitizedBarbershop}\nServiço: ${sanitizedService}\nData: ${dayjs(formData.date).format('DD/MM/YYYY')}\nHorário: ${formData.time}\n\nNos vemos lá! 💈`;
+      const whatsappMessage = `Olá ${sanitizedName}! Seu agendamento foi confirmado!\n\nBarbearia: ${sanitizedBarbershop}\nBarbeiro: ${barberName}\nServiço: ${sanitizedService}\nData: ${dayjs(formData.date).format('DD/MM/YYYY')}\nHorário: ${formData.time}\n\nNos vemos lá! 💈`;
       const whatsappUrl = `https://wa.me/55${formData.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`;
       
       toast({
@@ -294,24 +345,18 @@ const PublicBooking = () => {
         description: 'Você receberá uma confirmação no WhatsApp.',
       });
 
-      // Abrir WhatsApp em nova aba
       window.open(whatsappUrl, '_blank');
-
-      // Mostrar mensagem de sucesso
       setBookingSuccess(true);
-
-      // Limpar formulário
       setFormData({
         fullName: '',
         phone: '',
         serviceId: '',
-        promotionId: '',
+        barberId: '',
         date: '',
         time: ''
       });
 
     } catch (error: any) {
-      // Log seguro sem expor detalhes sensíveis
       if (import.meta.env.DEV) {
         console.error('Booking error:', error?.message);
       }
@@ -344,7 +389,7 @@ const PublicBooking = () => {
               O link que você acessou não corresponde a nenhuma barbearia cadastrada.
             </p>
             <Link to="/">
-              <Button variant="hero">Voltar para a página inicial</Button>
+              <Button>Voltar para a página inicial</Button>
             </Link>
           </CardContent>
         </Card>
@@ -358,25 +403,23 @@ const PublicBooking = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section - Perfil da Barbearia */}
-      <section className="gradient-hero text-accent-foreground py-16 px-6">
+      {/* Hero Section */}
+      <section className="bg-gradient-hero text-white py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <Link to="/" className="inline-flex items-center gap-2 text-accent-foreground/80 hover:text-accent-foreground transition-colors mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </Link>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Informações principais */}
             <div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
                 {barbershop.nome}
               </h1>
-              <p className="text-xl opacity-90 mb-6">
+              <p className="text-lg md:text-xl opacity-90 mb-6">
                 {barbershop.descricao || 'Agende seu horário conosco!'}
               </p>
 
-              {/* Informações de contato e localização */}
               <div className="space-y-3">
                 {barbershop.endereco && (
                   <div className="flex items-start gap-3">
@@ -403,28 +446,18 @@ const PublicBooking = () => {
                     <p className="opacity-90">{barbershop.telefone}</p>
                   </div>
                 )}
-                
-                {barbershop.horario_abertura && barbershop.horario_fechamento && (
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 flex-shrink-0" />
-                    <p className="opacity-90">
-                      {barbershop.horario_abertura} - {barbershop.horario_fechamento}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Promoções em destaque */}
             {promotions.length > 0 && (
-              <div className="bg-background/10 backdrop-blur-sm rounded-lg p-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Tag className="w-5 h-5" />
                   <h3 className="text-xl font-bold">Promoções Ativas</h3>
                 </div>
                 <div className="space-y-3">
                   {promotions.map((promo) => (
-                    <div key={promo.id} className="bg-accent/20 rounded-lg p-4">
+                    <div key={promo.id} className="bg-white/20 backdrop-blur rounded-lg p-4">
                       <h4 className="font-semibold text-lg">{promo.titulo}</h4>
                       <p className="text-2xl font-bold">{promo.desconto}% OFF</p>
                     </div>
@@ -436,144 +469,151 @@ const PublicBooking = () => {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-8 -mt-8">
-        {/* Seção de Agendamento */}
+      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-8 -mt-8">
+        {/* Formulário de Agendamento */}
         <Card className="shadow-elegant">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
               <Calendar className="w-6 h-6 text-accent" />
               {bookingSuccess ? 'Agendamento Confirmado!' : 'Agende Seu Horário'}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {bookingSuccess ? (
               <div className="text-center space-y-6 py-8">
                 <div className="w-20 h-20 mx-auto bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
                   <Scissors className="w-10 h-10 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold mb-2">Agendamento salvo com sucesso!</h3>
+                  <h3 className="text-2xl font-bold mb-2">Agendamento confirmado com sucesso!</h3>
                   <p className="text-muted-foreground">
                     Você receberá uma confirmação no WhatsApp com todos os detalhes.
                   </p>
                 </div>
                 <Button 
                   onClick={() => setBookingSuccess(false)} 
-                  variant="hero" 
                   size="lg"
-                  className="w-full"
+                  className="w-full md:w-auto"
                 >
                   Fazer Outro Agendamento
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome Completo</Label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="Digite seu nome completo"
-                      className="pl-10"
-                      required
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Nome Completo *</Label>
+                    <div className="relative">
+                      <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        id="fullName"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder="Digite seu nome completo"
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone (WhatsApp) *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+                      <InputMask
+                        mask="(99) 99999-9999"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      >
+                        {(inputProps: any) => (
+                          <Input
+                            {...inputProps}
+                            id="phone"
+                            placeholder="(11) 99999-9999"
+                            className="pl-10"
+                            required
+                          />
+                        )}
+                      </InputMask>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone (WhatsApp)</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
-                    <InputMask
-                      mask="(99) 99999-9999"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    >
-                      {(inputProps: any) => (
-                        <Input
-                          {...inputProps}
-                          id="phone"
-                          placeholder="(11) 99999-9999"
-                          className="pl-10"
-                          required
-                        />
-                      )}
-                    </InputMask>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="service">Serviço</Label>
-                <Select
-                  value={formData.serviceId}
-                  onValueChange={(value) => setFormData({ ...formData, serviceId: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o serviço" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.id} value={service.id.toString()}>
-                        {service.nome} - R$ {service.valor.toFixed(2)} ({service.duracao} min)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {promotions.length > 0 && (
-                <div className="space-y-2">
-                  <Label htmlFor="promotion">Promoção (opcional)</Label>
+                  <Label htmlFor="service">Serviço *</Label>
                   <Select
-                    value={formData.promotionId}
-                    onValueChange={(value) => setFormData({ ...formData, promotionId: value })}
+                    value={formData.serviceId}
+                    onValueChange={(value) => setFormData({ ...formData, serviceId: value, time: '' })}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma promoção" />
+                      <SelectValue placeholder="Selecione o serviço" />
                     </SelectTrigger>
                     <SelectContent>
-                      {promotions.map((promotion) => (
-                        <SelectItem key={promotion.id} value={promotion.id.toString()}>
-                          {promotion.titulo} - {promotion.desconto}% OFF
+                      {services.map((service) => (
+                        <SelectItem key={service.id} value={service.id.toString()}>
+                          {service.nome} - R$ {service.valor.toFixed(2)} ({service.duracao} min)
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {barbers.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="barber" className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Barbeiro *
+                    </Label>
+                    <Select
+                      value={formData.barberId}
+                      onValueChange={(value) => setFormData({ ...formData, barberId: value, time: '' })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o barbeiro" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {barbers.map((barber) => (
+                          <SelectItem key={barber.id} value={barber.id.toString()}>
+                            {barber.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
+                  <Label htmlFor="date">Data *</Label>
                   <Input
                     id="date"
                     type="date"
                     min={dayjs().format('YYYY-MM-DD')}
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value, time: '' })}
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="time">Horário</Label>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
+                {formData.date && formData.serviceId && (
+                  <div className="space-y-2">
+                    <Label>Horário Disponível *</Label>
+                    <TimeSlotSelector
+                      slots={availableSlots}
+                      selectedTime={formData.time}
+                      onSelectTime={(time) => setFormData({ ...formData, time })}
+                      serviceDuration={selectedService?.duracao}
+                    />
+                  </div>
+                )}
 
-                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={submitting}>
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="w-full" 
+                  disabled={submitting || !formData.time}
+                >
                   {submitting ? 'Agendando...' : 'Confirmar Agendamento'}
                 </Button>
               </form>
@@ -581,18 +621,21 @@ const PublicBooking = () => {
           </CardContent>
         </Card>
 
-        {/* Services List */}
+        {/* Lista de Serviços */}
         {services.length > 0 && (
           <Card className="shadow-elegant">
             <CardHeader>
               <CardTitle>Nossos Serviços</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {services.map((service) => (
-                <div key={service.id} className="p-4 border border-border rounded-lg">
-                  <h3 className="font-medium text-primary">{service.nome}</h3>
-                  <p className="text-sm text-muted-foreground">{service.duracao} minutos</p>
-                  <p className="text-lg font-bold text-accent mt-2">R$ {service.valor.toFixed(2)}</p>
+                <div key={service.id} className="p-5 border border-border rounded-lg hover:shadow-glow transition-all">
+                  <h3 className="font-semibold text-lg text-primary mb-1">{service.nome}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    {service.duracao} minutos
+                  </p>
+                  <p className="text-2xl font-bold text-accent">R$ {service.valor.toFixed(2)}</p>
                 </div>
               ))}
             </CardContent>

@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useBarbershop } from "@/hooks/useBarbershop";
-import { Store, Link as LinkIcon, Copy, CheckCircle } from "lucide-react";
+import { Store, Link as LinkIcon, Copy, CheckCircle, Users, Clock } from "lucide-react";
+import { BarbersManagement } from "@/components/BarbersManagement";
+import { ScheduleManagement } from "@/components/ScheduleManagement";
 
 const BarbershopSettings = () => {
   const { toast } = useToast();
@@ -98,18 +101,33 @@ const BarbershopSettings = () => {
   const barbershopLink = formData.slug ? `${window.location.origin}/b/${formData.slug}` : "";
 
   return (
-    <Card className="shadow-elegant">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Store className="w-5 h-5 text-accent" />
-          Configurações da Barbearia
-        </CardTitle>
-        <CardDescription>
-          Configure as informações da sua barbearia e gere um link único para seus clientes
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-6">
+      <Tabs defaultValue="info" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="info" className="flex items-center gap-2">
+            <Store className="w-4 h-4" />
+            Informações
+          </TabsTrigger>
+          <TabsTrigger value="barbers" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Barbeiros
+          </TabsTrigger>
+          <TabsTrigger value="schedule" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Horários
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="info">
+          <Card className="shadow-elegant">
+            <CardHeader>
+              <CardTitle>Informações da Barbearia</CardTitle>
+              <CardDescription>
+                Configure as informações da sua barbearia e gere um link único para seus clientes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nome">Nome da Barbearia *</Label>
             <Input
@@ -231,12 +249,23 @@ const BarbershopSettings = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" variant="hero">
+          <Button type="submit" className="w-full">
             {barbershop ? "Atualizar Barbearia" : "Criar Barbearia"}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="barbers">
+          <BarbersManagement />
+        </TabsContent>
+
+        <TabsContent value="schedule">
+          <ScheduleManagement />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

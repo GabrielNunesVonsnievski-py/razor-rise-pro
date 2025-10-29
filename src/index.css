@@ -8,40 +8,43 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 7%;
+    /* Clean & Modern Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 220 9% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card-foreground: 220 9% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 220 9% 15%;
 
-    --primary: 0 0% 7%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 220 13% 18%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 220 13% 96%;
+    --secondary-foreground: 220 9% 15%;
 
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 13% 96%;
+    --muted-foreground: 220 9% 46%;
 
     --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 25 95% 53%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(0 0% 15%));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(30 100% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(25 95% 53%) 100%);
+    /* Gradients - Clean & Elegant */
+    --gradient-primary: linear-gradient(135deg, hsl(220 13% 18%), hsl(220 13% 28%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(30 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 13% 18%) 0%, hsl(25 95% 53%) 100%);
     
-    --shadow-elegant: 0 10px 30px -10px hsl(0 0% 0% / 0.15);
-    --shadow-glow: 0 0 40px hsl(var(--accent) / 0.3);
+    /* Shadows - Subtle & Professional */
+    --shadow-elegant: 0 1px 3px hsl(220 9% 15% / 0.08), 0 1px 2px hsl(220 9% 15% / 0.06);
+    --shadow-glow: 0 0 0 1px hsl(var(--accent) / 0.1);
 
     --radius: 0.5rem;
 
@@ -63,40 +66,43 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 0 0% 7%;
+    /* Clean & Modern Dark Theme */
+    --background: 220 13% 9%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 7%;
+    --card: 220 13% 11%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 7%;
+    --popover: 220 13% 11%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 7%;
+    --primary-foreground: 220 13% 9%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 220 13% 16%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 13% 16%;
+    --muted-foreground: 220 9% 65%;
 
     --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
     --ring: 25 95% 53%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(0 0% 85%));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(30 100% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 98%) 0%, hsl(25 95% 53%) 100%);
+    /* Gradients - Clean & Elegant */
+    --gradient-primary: linear-gradient(135deg, hsl(220 13% 11%), hsl(220 13% 18%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(30 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 13% 11%) 0%, hsl(25 95% 53%) 100%);
     
-    --shadow-elegant: 0 10px 30px -10px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 40px hsl(var(--accent) / 0.4);
+    /* Shadows - Subtle & Professional */
+    --shadow-elegant: 0 1px 3px hsl(0 0% 0% / 0.4), 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 0 1px hsl(var(--accent) / 0.2);
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -132,10 +138,6 @@ All colors MUST be HSL.
     background: var(--gradient-hero);
   }
   
-  .bg-gradient-dark {
-    background: linear-gradient(135deg, hsl(0 0% 7%), hsl(0 0% 4%));
-  }
-  
   .shadow-elegant {
     box-shadow: var(--shadow-elegant);
   }
@@ -146,6 +148,15 @@ All colors MUST be HSL.
   
   .text-gradient {
     @apply bg-gradient-to-r from-accent to-orange-400 bg-clip-text text-transparent;
+  }
+
+  /* Modern Card Style */
+  .card-modern {
+    @apply bg-card border border-border rounded-lg shadow-elegant transition-all duration-200;
+  }
+  
+  .card-modern:hover {
+    @apply shadow-glow;
   }
 
   /* Mobile responsive improvements */
