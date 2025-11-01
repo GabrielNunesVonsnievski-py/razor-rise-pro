@@ -200,13 +200,16 @@ export type Database = {
       }
       barbershops: {
         Row: {
+          cor_fundo: string | null
           created_at: string | null
           descricao: string | null
           dias_funcionamento: string[] | null
           endereco: string | null
+          foto_perfil_url: string | null
           horario_abertura: string | null
           horario_fechamento: string | null
           id: number
+          logo_url: string | null
           nome: string
           owner_id: string
           slug: string
@@ -214,13 +217,16 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cor_fundo?: string | null
           created_at?: string | null
           descricao?: string | null
           dias_funcionamento?: string[] | null
           endereco?: string | null
+          foto_perfil_url?: string | null
           horario_abertura?: string | null
           horario_fechamento?: string | null
           id?: number
+          logo_url?: string | null
           nome: string
           owner_id: string
           slug: string
@@ -228,13 +234,16 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cor_fundo?: string | null
           created_at?: string | null
           descricao?: string | null
           dias_funcionamento?: string[] | null
           endereco?: string | null
+          foto_perfil_url?: string | null
           horario_abertura?: string | null
           horario_fechamento?: string | null
           id?: number
+          logo_url?: string | null
           nome?: string
           owner_id?: string
           slug?: string
