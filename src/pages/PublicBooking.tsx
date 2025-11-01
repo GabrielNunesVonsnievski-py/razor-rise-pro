@@ -39,6 +39,9 @@ interface Barbershop {
   telefone: string | null;
   endereco: string | null;
   descricao: string | null;
+  logo_url?: string;
+  foto_perfil_url?: string;
+  cor_fundo?: string;
 }
 
 interface BarbershopSchedule {
@@ -402,17 +405,25 @@ const PublicBooking = () => {
     : null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ backgroundColor: barbershop.cor_fundo || '#1a1a1a' }}>
       {/* Hero Section */}
       <section className="bg-gradient-hero text-white py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-6">
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
+          <Link to="/auth" className="inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all shadow-glow mb-6 font-semibold">
+            <Scissors className="w-4 h-4" />
+            Acessar App
           </Link>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
+              {barbershop.logo_url && (
+                <img 
+                  src={barbershop.logo_url} 
+                  alt={`Logo ${barbershop.nome}`}
+                  className="w-32 h-32 object-contain mb-6 rounded-lg bg-white/10 p-2"
+                />
+              )}
+              
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
                 {barbershop.nome}
               </h1>
@@ -449,22 +460,32 @@ const PublicBooking = () => {
               </div>
             </div>
 
-            {promotions.length > 0 && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Tag className="w-5 h-5" />
-                  <h3 className="text-xl font-bold">Promoções Ativas</h3>
+            <div className="space-y-4">
+              {barbershop.foto_perfil_url && (
+                <img 
+                  src={barbershop.foto_perfil_url} 
+                  alt={`Foto ${barbershop.nome}`}
+                  className="w-full max-w-md mx-auto lg:mx-0 rounded-xl shadow-glow object-cover aspect-square"
+                />
+              )}
+              
+              {promotions.length > 0 && (
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Tag className="w-5 h-5" />
+                    <h3 className="text-xl font-bold">Promoções Ativas</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {promotions.map((promo) => (
+                      <div key={promo.id} className="bg-white/20 backdrop-blur rounded-lg p-4">
+                        <h4 className="font-semibold text-lg">{promo.titulo}</h4>
+                        <p className="text-2xl font-bold">{promo.desconto}% OFF</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {promotions.map((promo) => (
-                    <div key={promo.id} className="bg-white/20 backdrop-blur rounded-lg p-4">
-                      <h4 className="font-semibold text-lg">{promo.titulo}</h4>
-                      <p className="text-2xl font-bold">{promo.desconto}% OFF</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </section>

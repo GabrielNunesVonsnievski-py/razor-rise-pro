@@ -1,151 +1,265 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Scissors, Star, Clock, Smartphone, TrendingUp, Users, MessageCircle, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import winixLogo from "@/assets/winix-logo.png";
+import { 
+  Calendar, 
+  MessageSquare, 
+  TrendingUp, 
+  Users, 
+  DollarSign,
+  Clock,
+  Check,
+  Scissors,
+  Star,
+  Zap,
+  Shield,
+  Sparkles
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
-  const features = [
-    {
-      icon: Calendar,
-      title: "Agendamento Inteligente",
-      description: "Sistema completo de agendamentos com confirmação automática",
-    },
-    {
-      icon: MessageCircle,
-      title: "Bot WhatsApp",
-      description: "Automação completa para agendamentos via WhatsApp",
-    },
-    {
-      icon: TrendingUp,
-      title: "Sistema Financeiro",
-      description: "Controle total de receitas, lucros e relatórios detalhados",
-    },
-    {
-      icon: Star,
-      title: "Promoções Personalizadas",
-      description: "Crie e gerencie promoções direto pelo app",
-    },
-  ];
-
-  const benefits = [
-    "Aumente seus agendamentos em até 300%",
-    "Reduza cancelamentos com lembretes automáticos",
-    "Controle financeiro completo",
-    "Interface moderna e responsiva",
-    "Suporte completo para dispositivos móveis",
-    "Integração com WhatsApp Business"
-  ];
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link to="/" className="flex items-center gap-2">
-              <img src={winixLogo} alt="Winix" className="w-12 h-12" />
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link to="/auth">
-              <Button variant="accent">
-                Entrar
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
-      <section className="bg-gradient-hero text-accent-foreground py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <Badge className="mb-6 bg-accent-foreground text-accent">
-            🚀 Lançamento Especial - 50% OFF
+      <section className="relative overflow-hidden bg-gradient-hero text-white py-20 px-6">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
+        
+        <div className="max-w-6xl mx-auto text-center relative z-10">
+          <Badge className="mb-6 bg-accent text-accent-foreground border-none px-6 py-2 text-base animate-pulse">
+            💈 Sistema Profissional para Barbearias
           </Badge>
-          <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
-            O Sistema Completo para sua
-            <span className="block text-gradient">Barbearia</span>
+          
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            Transforme sua barbearia em uma
+            <span className="text-accent block mt-2">máquina de agendamentos!</span>
           </h1>
-          <p className="text-xl md:text-2xl opacity-90 mb-10 max-w-3xl mx-auto">
-            Transforme sua barbearia com agendamento automático via WhatsApp,
-            sistema financeiro completo e muito mais.
+          
+          <p className="text-xl md:text-2xl opacity-90 mb-4 max-w-3xl mx-auto">
+            Organize, atenda e <strong>lucre mais</strong> com o sistema que faz sua barbearia rodar no piloto automático.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
-              <Button variant="accent" size="lg" className="text-lg px-8 py-6">
-                Ver planos
-              </Button>
-            </Link>
+          
+          <p className="text-lg md:text-xl opacity-80 mb-10 max-w-2xl mx-auto">
+            O Winix é o seu novo assistente digital — simples, rápido e feito sob medida para barbeiros.
+          </p>
+          
+          <Button 
+            size="lg" 
+            className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
+            onClick={() => navigate('/auth')}
+          >
+            <Sparkles className="mr-2 h-6 w-6" />
+            COMEÇAR AGORA COM WINIX
+          </Button>
+        </div>
+      </section>
+
+      {/* Dor e Identificação */}
+      <section className="py-20 px-6 bg-secondary/30">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-12">
+            Você ainda tenta controlar sua barbearia <span className="text-accent">na mão?</span>
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {[
+              "Clientes marcando pelo direct e outros pedindo no WhatsApp?",
+              "Confusão com horários e agendamentos duplicados?",
+              "Falta de controle sobre o faturamento e desempenho?"
+            ].map((problema, i) => (
+              <Card key={i} className="border-l-4 border-l-accent bg-card hover:shadow-elegant transition-all">
+                <CardContent className="p-6">
+                  <p className="text-foreground font-medium">{problema}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <div className="text-center">
+            <p className="text-2xl font-bold mb-6 text-foreground">
+              A boa notícia é que <span className="text-accent">dá pra resolver tudo isso com o Winix.</span>
+            </p>
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="border-accent text-accent hover:bg-accent hover:text-white px-10 py-6 text-lg font-bold"
+              onClick={() => navigate('/auth')}
+            >
+              CONHEÇA O WINIX
+            </Button>
           </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-6 py-16 space-y-20">
-        {/* Features */}
-        <section>
+      {/* Solução */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4">
-              Tudo que você precisa em um só lugar
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Conheça o Winix — <span className="text-accent">o sistema completo</span> para sua barbearia
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Sistema completo para automatizar e profissionalizar sua barbearia
-            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="shadow-elegant hover:shadow-glow transition-all duration-300 group">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4 group-hover:shadow-glow transition-all">
-                    <feature.icon className="w-6 h-6 text-accent-foreground" />
-                  </div>
-                  <CardTitle className="text-xl text-primary">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Calendar,
+                title: "Agendamentos Automáticos",
+                description: "Clientes agendam sozinhos pelo link. Zero confusão, zero trabalho manual."
+              },
+              {
+                icon: MessageSquare,
+                title: "Lembretes Automáticos",
+                description: "WhatsApp automático para lembrar os clientes e reduzir faltas."
+              },
+              {
+                icon: DollarSign,
+                title: "Painel Financeiro Completo",
+                description: "Veja quanto você fatura por dia, semana e mês em tempo real."
+              },
+              {
+                icon: Users,
+                title: "Controle de Equipe",
+                description: "Gerencie seus barbeiros e acompanhe o desempenho de cada um."
+              },
+              {
+                icon: TrendingUp,
+                title: "Aumento no Faturamento",
+                description: "Mais organização = mais clientes atendidos = mais lucro."
+              },
+              {
+                icon: Clock,
+                title: "Economize Tempo",
+                description: "Automatize tarefas repetitivas e foque no que importa: seus clientes."
+              }
+            ].map((feature, i) => (
+              <Card key={i} className="border-none shadow-elegant hover:shadow-glow hover:scale-105 transition-all bg-gradient-to-br from-card to-card/50">
+                <CardContent className="p-8 text-center">
+                  <feature.icon className="h-12 w-12 text-accent mx-auto mb-4" />
+                  <h3 className="text-xl font-bold mb-3 text-foreground">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </section>
-
-
-        {/* CTA */}
-        <section className="text-center bg-accent/5 rounded-2xl p-8 md:p-16">
-          <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4">
-            Pronto para revolucionar sua barbearia?
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Junte-se a centenas de barbeiros que já transformaram seus negócios
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg" className="text-lg px-8 py-6">
-              <Smartphone className="w-5 h-5" />
-              Começar Teste Grátis
+          
+          <div className="text-center mt-12">
+            <Button 
+              size="lg"
+              className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
+              onClick={() => navigate('/auth')}
+            >
+              <Zap className="mr-2 h-6 w-6" />
+              EXPERIMENTAR AGORA
             </Button>
-            <Link to="/dashboard">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-                Ver Dashboard Demo
-              </Button>
-            </Link>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
-      {/* Footer */}
-      <footer className="bg-primary text-primary-foreground py-12 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <img src={winixLogo} alt="Winix" className="w-8 h-8" />
-            <span className="text-2xl font-bold">Winix</span>
+      {/* Benefícios */}
+      <section className="py-20 px-6 bg-gradient-accent text-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+            Por que escolher o <span className="text-black">Winix?</span>
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {[
+              "Sistema profissional sem complicação",
+              "Agendamento online 24/7 automático",
+              "Controle total do seu negócio",
+              "Lembretes automáticos via WhatsApp",
+              "Painel financeiro em tempo real",
+              "Suporte dedicado para barbeiros",
+              "Funciona em qualquer dispositivo",
+              "Dados seguros e protegidos"
+            ].map((benefit, i) => (
+              <div key={i} className="flex items-start gap-4">
+                <div className="bg-white/20 p-2 rounded-full">
+                  <Check className="h-6 w-6 text-white" />
+                </div>
+                <p className="text-lg font-medium pt-1">{benefit}</p>
+              </div>
+            ))}
           </div>
-          <p className="text-primary-foreground/80">
-            © 2025 Winix. Transformando barbearias em todo o Brasil.
+        </div>
+      </section>
+
+      {/* Prova Social */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+            Barbeiros que já <span className="text-accent">transformaram</span> seus negócios
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Carlos Silva",
+                barbershop: "Barbearia do Carlos",
+                testimonial: "Meu faturamento aumentou 40% no primeiro mês. Agora tenho controle total da agenda!",
+                rating: 5
+              },
+              {
+                name: "João Pedro",
+                barbershop: "JP Barber Shop",
+                testimonial: "Acabou a bagunça! Meus clientes adoram agendar online e eu economizo horas por semana.",
+                rating: 5
+              },
+              {
+                name: "Roberto Costa",
+                barbershop: "Costa's Barbearia",
+                testimonial: "Sistema simples e profissional. Recomendo para todo barbeiro que quer crescer.",
+                rating: 5
+              }
+            ].map((testimonial, i) => (
+              <Card key={i} className="shadow-elegant hover:shadow-glow transition-all">
+                <CardContent className="p-6">
+                  <div className="flex mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 text-accent fill-accent" />
+                    ))}
+                  </div>
+                  <p className="text-foreground mb-4 italic">"{testimonial.testimonial}"</p>
+                  <div className="border-t pt-4">
+                    <p className="font-bold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.barbershop}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-20 px-6 bg-foreground text-background">
+        <div className="max-w-4xl mx-auto text-center">
+          <Scissors className="h-20 w-20 text-accent mx-auto mb-8 animate-pulse" />
+          
+          <h2 className="text-4xl md:text-6xl font-bold mb-6">
+            Pronto para <span className="text-accent">transformar</span> sua barbearia?
+          </h2>
+          
+          <p className="text-xl md:text-2xl opacity-80 mb-10">
+            Comece agora e veja seus resultados crescerem em <strong>poucos dias.</strong>
+          </p>
+          
+          <Button 
+            size="lg"
+            className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
+            onClick={() => navigate('/auth')}
+          >
+            <Shield className="mr-2 h-6 w-6" />
+            CRIAR MINHA CONTA GRÁTIS
+          </Button>
+          
+          <p className="text-sm opacity-60 mt-6">
+            Sem cartão de crédito. Sem compromisso. Comece em menos de 2 minutos.
           </p>
         </div>
-      </footer>
+      </section>
     </div>
   );
 };

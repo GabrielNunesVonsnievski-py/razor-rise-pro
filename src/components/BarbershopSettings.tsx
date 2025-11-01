@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useBarbershop } from "@/hooks/useBarbershop";
-import { Store, Link as LinkIcon, Copy, CheckCircle, Users, Clock } from "lucide-react";
+import { Store, Link as LinkIcon, Copy, CheckCircle, Users, Clock, Palette } from "lucide-react";
 import { BarbersManagement } from "@/components/BarbersManagement";
 import { ScheduleManagement } from "@/components/ScheduleManagement";
+import { ImageUpload } from "@/components/ImageUpload";
 
 const BarbershopSettings = () => {
   const { toast } = useToast();
@@ -24,7 +25,10 @@ const BarbershopSettings = () => {
     descricao: "",
     horario_abertura: "09:00",
     horario_fechamento: "18:00",
-    dias_funcionamento: ["1", "2", "3", "4", "5", "6"]
+    dias_funcionamento: ["1", "2", "3", "4", "5", "6"],
+    logo_url: "",
+    foto_perfil_url: "",
+    cor_fundo: "#1a1a1a"
   });
 
   useEffect(() => {
@@ -37,7 +41,10 @@ const BarbershopSettings = () => {
         descricao: barbershop.descricao || "",
         horario_abertura: (barbershop as any).horario_abertura?.slice(0, 5) || "09:00",
         horario_fechamento: (barbershop as any).horario_fechamento?.slice(0, 5) || "18:00",
-        dias_funcionamento: (barbershop as any).dias_funcionamento || ["1", "2", "3", "4", "5", "6"]
+        dias_funcionamento: (barbershop as any).dias_funcionamento || ["1", "2", "3", "4", "5", "6"],
+        logo_url: (barbershop as any).logo_url || "",
+        foto_perfil_url: (barbershop as any).foto_perfil_url || "",
+        cor_fundo: (barbershop as any).cor_fundo || "#1a1a1a"
       });
     }
   }, [barbershop]);
@@ -248,6 +255,56 @@ const BarbershopSettings = () => {
               ))}
             </div>
           </div>
+
+          {barbershop?.id && (
+            <>
+              <div className="space-y-4 border-t pt-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-accent" />
+                  Personalização da Página Pública
+                </h3>
+                
+                <ImageUpload
+                  currentImageUrl={formData.logo_url}
+                  onImageUpload={(url) => setFormData(prev => ({ ...prev, logo_url: url }))}
+                  label="Logo da Barbearia"
+                  barbershopId={barbershop.id}
+                  folder="logo"
+                />
+                
+                <ImageUpload
+                  currentImageUrl={formData.foto_perfil_url}
+                  onImageUpload={(url) => setFormData(prev => ({ ...prev, foto_perfil_url: url }))}
+                  label="Foto de Perfil"
+                  barbershopId={barbershop.id}
+                  folder="perfil"
+                />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cor_fundo">Cor de Fundo da Página Pública</Label>
+                  <div className="flex gap-4 items-center">
+                    <Input
+                      id="cor_fundo"
+                      type="color"
+                      value={formData.cor_fundo}
+                      onChange={(e) => setFormData(prev => ({ ...prev, cor_fundo: e.target.value }))}
+                      className="w-20 h-10 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.cor_fundo}
+                      onChange={(e) => setFormData(prev => ({ ...prev, cor_fundo: e.target.value }))}
+                      placeholder="#1a1a1a"
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Esta cor será aplicada no fundo da sua página de agendamento público
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
 
           <Button type="submit" className="w-full">
             {barbershop ? "Atualizar Barbearia" : "Criar Barbearia"}
