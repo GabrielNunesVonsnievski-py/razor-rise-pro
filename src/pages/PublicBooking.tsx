@@ -272,31 +272,41 @@ const PublicBooking = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       let userId = user?.id;
+      let isNewUser = false;
 
       // Auto-criar conta se não autenticado
       if (!user) {
-        const tempEmail = `${formData.phone.replace(/\D/g, '')}@temp.winix.app`;
-        const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+        const cleanPhone = formData.phone.replace(/\D/g, '');
+        const tempEmail = `${cleanPhone}@temp.winix.app`;
+        const tempPassword = `${cleanPhone}Winix2024!`;
         
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        // Tentar fazer login primeiro
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: tempEmail,
-          password: tempPassword,
-          options: {
-            data: {
-              full_name: formData.fullName,
-              phone: formData.phone
-            }
-          }
+          password: tempPassword
         });
 
-        if (signUpError) {
-          const { data: signInData } = await supabase.auth.signInWithPassword({
+        if (signInError) {
+          // Se falhar, criar nova conta
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: tempEmail,
-            password: tempPassword
+            password: tempPassword,
+            options: {
+              data: {
+                full_name: formData.fullName,
+                phone: formData.phone
+              }
+            }
           });
-          userId = signInData.user?.id;
-        } else {
+
+          if (signUpError) throw signUpError;
           userId = signUpData.user?.id;
+          isNewUser = true;
+
+          // Aguardar um momento para garantir que a sessão foi estabelecida
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } else {
+          userId = signInData.user?.id;
         }
       }
 
@@ -307,7 +317,7 @@ const PublicBooking = () => {
       const service = services.find(s => s.id === parseInt(formData.serviceId));
       
       // Criar agendamento
-      const { error } = await supabase
+      const { error: appointmentError } = await supabase
         .from('appointments')
         .insert({
           barbershop_id: barbershop?.id,
@@ -323,17 +333,24 @@ const PublicBooking = () => {
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (appointmentError) throw appointmentError;
 
-      // Adicionar cliente
-      await supabase
-        .from('barbershop_clients')
-        .insert({
-          barbershop_id: barbershop?.id,
-          client_user_id: userId
-        })
-        .select()
-        .maybeSingle();
+      // Adicionar cliente à barbearia se for novo
+      if (isNewUser) {
+        const { error: clientError } = await supabase
+          .from('barbershop_clients')
+          .insert({
+            barbershop_id: barbershop?.id,
+            client_user_id: userId
+          })
+          .select()
+          .maybeSingle();
+
+        // Não falhar se o cliente já existir
+        if (clientError && !clientError.message.includes('duplicate')) {
+          console.error('Erro ao adicionar cliente:', clientError);
+        }
+      }
 
       const barberName = barbers.find(b => b.id === parseInt(formData.barberId))?.nome || 'Barbeiro';
       const sanitizedName = formData.fullName.trim().slice(0, 100);
@@ -360,12 +377,10 @@ const PublicBooking = () => {
       });
 
     } catch (error: any) {
-      if (import.meta.env.DEV) {
-        console.error('Booking error:', error?.message);
-      }
+      console.error('Booking error:', error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível criar o agendamento. Tente novamente.',
+        title: 'Erro ao agendar',
+        description: error.message || 'Não foi possível criar o agendamento. Tente novamente.',
         variant: 'destructive'
       });
     } finally {
@@ -404,12 +419,22 @@ const PublicBooking = () => {
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(barbershop.endereco)}`
     : null;
 
+  const customBg = barbershop.cor_fundo || 'hsl(var(--background))';
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: barbershop.cor_fundo || '#1a1a1a' }}>
-      {/* Hero Section */}
-      <section className="bg-gradient-hero text-white py-12 md:py-20 px-4 md:px-6">
-        <div className="max-w-6xl mx-auto">
-          <Link to="/auth" className="inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg hover:bg-accent/90 transition-all shadow-glow mb-6 font-semibold">
+    <div className="min-h-screen bg-background">
+      {/* Hero Section with Custom Color */}
+      <section 
+        className="text-white py-8 md:py-12 px-4 md:px-6 relative overflow-hidden"
+        style={{ 
+          background: `linear-gradient(135deg, ${customBg} 0%, ${customBg}dd 100%)`
+        }}
+      >
+        {/* Decorative overlay */}
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"></div>
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <Link to="/auth" className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white border border-white/30 px-6 py-3 rounded-lg hover:bg-white/30 transition-all shadow-lg mb-6 font-semibold">
             <Scissors className="w-4 h-4" />
             Acessar App
           </Link>
@@ -420,29 +445,29 @@ const PublicBooking = () => {
                 <img 
                   src={barbershop.logo_url} 
                   alt={`Logo ${barbershop.nome}`}
-                  className="w-32 h-32 object-contain mb-6 rounded-lg bg-white/10 p-2"
+                  className="w-24 h-24 object-contain mb-6 rounded-lg bg-white/10 backdrop-blur-sm p-2"
                 />
               )}
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight drop-shadow-lg">
                 {barbershop.nome}
               </h1>
-              <p className="text-lg md:text-xl opacity-90 mb-6">
+              <p className="text-lg md:text-xl opacity-95 mb-6 drop-shadow-md">
                 {barbershop.descricao || 'Agende seu horário conosco!'}
               </p>
 
               <div className="space-y-3">
                 {barbershop.endereco && (
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-lg">
                     <MapPin className="w-5 h-5 mt-1 flex-shrink-0" />
                     <div>
-                      <p className="opacity-90">{barbershop.endereco}</p>
+                      <p className="opacity-95">{barbershop.endereco}</p>
                       {googleMapsUrl && (
                         <a 
                           href={googleMapsUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-sm underline opacity-75 hover:opacity-100 transition-opacity"
+                          className="text-sm underline opacity-80 hover:opacity-100 transition-opacity"
                         >
                           Ver no Google Maps
                         </a>
@@ -452,32 +477,24 @@ const PublicBooking = () => {
                 )}
                 
                 {barbershop.telefone && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-lg">
                     <Phone className="w-5 h-5 flex-shrink-0" />
-                    <p className="opacity-90">{barbershop.telefone}</p>
+                    <p className="opacity-95">{barbershop.telefone}</p>
                   </div>
                 )}
               </div>
             </div>
 
             <div className="space-y-4">
-              {barbershop.foto_perfil_url && (
-                <img 
-                  src={barbershop.foto_perfil_url} 
-                  alt={`Foto ${barbershop.nome}`}
-                  className="w-full max-w-md mx-auto lg:mx-0 rounded-xl shadow-glow object-cover aspect-square"
-                />
-              )}
-              
               {promotions.length > 0 && (
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <div className="bg-white/15 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl">
                   <div className="flex items-center gap-2 mb-4">
                     <Tag className="w-5 h-5" />
                     <h3 className="text-xl font-bold">Promoções Ativas</h3>
                   </div>
                   <div className="space-y-3">
                     {promotions.map((promo) => (
-                      <div key={promo.id} className="bg-white/20 backdrop-blur rounded-lg p-4">
+                      <div key={promo.id} className="bg-white/25 backdrop-blur rounded-lg p-4 border border-white/30">
                         <h4 className="font-semibold text-lg">{promo.titulo}</h4>
                         <p className="text-2xl font-bold">{promo.desconto}% OFF</p>
                       </div>

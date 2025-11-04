@@ -148,7 +148,7 @@ const BarberDashboard = () => {
                 <Button
                   variant="accent"
                   className="w-full text-sm md:text-base"
-                  onClick={() => toast({ title: "Funcionalidade não implementada" })}
+                  onClick={() => window.location.href = '/appointments'}
                 >
                   Ver Todos os Agendamentos
                 </Button>

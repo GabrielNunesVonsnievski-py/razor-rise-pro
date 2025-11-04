@@ -17,6 +17,7 @@ interface Client {
   phone: string;
   created_at: string;
   total_appointments: number;
+  last_appointment_date?: string;
 }
 
 const Clients = () => {
@@ -67,16 +68,19 @@ const Clients = () => {
 
       if (profilesError) throw profilesError;
 
-      // Buscar total de agendamentos por cliente
+      // Buscar total de agendamentos por cliente e última data
       const { data: appointments } = await supabase
         .from('appointments')
-        .select('user_id')
-        .eq('barbershop_id', barbershopData.id);
+        .select('user_id, date')
+        .eq('barbershop_id', barbershopData.id)
+        .order('date', { ascending: false });
 
       // Montar lista de clientes
       const clientsData: Client[] = profiles?.map(profile => {
         const clientData = barbershopClients.find(c => c.client_user_id === profile.user_id);
-        const totalAppointments = appointments?.filter(a => a.user_id === profile.user_id).length || 0;
+        const clientAppointments = appointments?.filter(a => a.user_id === profile.user_id) || [];
+        const totalAppointments = clientAppointments.length;
+        const lastAppointmentDate = clientAppointments.length > 0 ? clientAppointments[0].date : undefined;
 
         return {
           id: profile.user_id,
@@ -84,7 +88,8 @@ const Clients = () => {
           email: profile.email || 'Sem email',
           phone: profile.phone || 'Sem telefone',
           created_at: clientData?.created_at || '',
-          total_appointments: totalAppointments
+          total_appointments: totalAppointments,
+          last_appointment_date: lastAppointmentDate
         };
       }) || [];
 
@@ -203,16 +208,16 @@ const Clients = () => {
                                 {client.phone}
                               </span>
                             )}
-                            {client.email && (
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {client.email}
-                              </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <p>Cliente desde {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}</p>
+                            {client.last_appointment_date && (
+                              <p className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                Último: {format(new Date(client.last_appointment_date), "dd/MM/yyyy", { locale: ptBR })}
+                              </p>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Cliente desde {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                          </p>
                         </div>
                       </div>
                       <div className="text-right">
