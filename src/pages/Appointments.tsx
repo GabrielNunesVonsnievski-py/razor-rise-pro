@@ -245,7 +245,6 @@ const Appointments = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <UserHeader />
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="hero">
@@ -318,7 +317,7 @@ const Appointments = () => {
                   <Button onClick={handleCreateAppointment}>Criar Agendamento</Button>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
             </div>
           </header>
 

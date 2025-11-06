@@ -197,7 +197,6 @@ const Promotions = () => {
                 <p className="text-sm text-muted-foreground">Gerencie suas ofertas especiais</p>
               </div>
             </div>
-            <UserHeader />
           </header>
 
           <div className="p-6 space-y-6">

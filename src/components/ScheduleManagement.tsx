@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Save } from "lucide-react";
+import { Save, Clock, AlertCircle } from "lucide-react";
 import { useBarbershop } from "@/hooks/useBarbershop";
+import { Badge } from "@/components/ui/badge";
 
 interface DaySchedule {
   id?: number;
@@ -20,13 +21,13 @@ interface DaySchedule {
 }
 
 const DIAS_SEMANA = [
-  "Domingo",
-  "Segunda-feira",
-  "Terça-feira",
-  "Quarta-feira",
-  "Quinta-feira",
-  "Sexta-feira",
-  "Sábado",
+  { num: 0, nome: "Domingo", short: "Dom" },
+  { num: 1, nome: "Segunda-feira", short: "Seg" },
+  { num: 2, nome: "Terça-feira", short: "Ter" },
+  { num: 3, nome: "Quarta-feira", short: "Qua" },
+  { num: 4, nome: "Quinta-feira", short: "Qui" },
+  { num: 5, nome: "Sexta-feira", short: "Sex" },
+  { num: 6, nome: "Sábado", short: "Sáb" },
 ];
 
 export const ScheduleManagement = () => {
@@ -54,8 +55,6 @@ export const ScheduleManagement = () => {
 
       if (error) throw error;
 
-      // Criar schedules padrão para dias sem configuração
-      const existingDays = data?.map((s) => s.dia_semana) || [];
       const defaultSchedules: DaySchedule[] = [];
 
       for (let i = 0; i < 7; i++) {
@@ -77,7 +76,7 @@ export const ScheduleManagement = () => {
             hora_fim: "18:00",
             intervalo_inicio: "",
             intervalo_fim: "",
-            ativo: i >= 1 && i <= 6, // Segunda a sábado ativos por padrão
+            ativo: i >= 1 && i <= 6,
           });
         }
       }
@@ -117,7 +116,6 @@ export const ScheduleManagement = () => {
       return "Horário de início deve ser menor que horário de fim";
     }
 
-    // Se tem intervalo, validar
     if (intInicio || intFim) {
       if (!intInicio || !intFim) {
         return "Intervalo incompleto: defina início e fim do intervalo";
@@ -142,13 +140,12 @@ export const ScheduleManagement = () => {
   const handleSave = async () => {
     if (!barbershop?.id) return;
 
-    // Validar todos os horários
     for (const schedule of schedules) {
       const error = validateSchedule(schedule);
       if (error) {
         toast({
           title: "Erro de Validação",
-          description: `${DIAS_SEMANA[schedule.dia_semana]}: ${error}`,
+          description: `${DIAS_SEMANA[schedule.dia_semana].nome}: ${error}`,
           variant: "destructive",
         });
         return;
@@ -157,13 +154,11 @@ export const ScheduleManagement = () => {
 
     setLoading(true);
     try {
-      // Deletar todos os horários existentes
       await supabase
         .from("barbershop_schedules")
         .delete()
         .eq("barbershop_id", barbershop.id);
 
-      // Inserir apenas os ativos
       const activeSchedules = schedules
         .filter((s) => s.ativo)
         .map((s) => ({
@@ -202,103 +197,151 @@ export const ScheduleManagement = () => {
     }
   };
 
+  const activeDays = schedules.filter(s => s.ativo).length;
+
   return (
-    <Card>
+    <Card className="shadow-elegant">
       <CardHeader>
-        <CardTitle>Gestão de Horários e Intervalos</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-accent" />
+              Gestão de Horários
+            </CardTitle>
+            <CardDescription>
+              Configure os horários de funcionamento e intervalos para cada dia da semana
+            </CardDescription>
+          </div>
+          <Badge variant="secondary" className="text-sm">
+            {activeDays} {activeDays === 1 ? 'dia ativo' : 'dias ativos'}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-6">
+        <div className="grid gap-4">
           {schedules.map((schedule) => (
-            <div
+            <Card
               key={schedule.dia_semana}
-              className="p-4 border rounded-lg space-y-3"
+              className={`transition-all ${schedule.ativo ? 'border-accent/50 bg-accent/5' : 'opacity-60'}`}
             >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{DIAS_SEMANA[schedule.dia_semana]}</h3>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor={`ativo-${schedule.dia_semana}`} className="text-sm">
-                    Ativo
-                  </Label>
-                  <Switch
-                    id={`ativo-${schedule.dia_semana}`}
-                    checked={schedule.ativo}
-                    onCheckedChange={(checked) =>
-                      handleUpdate(schedule.dia_semana, "ativo", checked)
-                    }
-                  />
-                </div>
-              </div>
-
-              {schedule.ativo && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor={`inicio-${schedule.dia_semana}`}>
-                      Hora de Início *
-                    </Label>
-                    <Input
-                      id={`inicio-${schedule.dia_semana}`}
-                      type="time"
-                      value={schedule.hora_inicio}
-                      onChange={(e) =>
-                        handleUpdate(schedule.dia_semana, "hora_inicio", e.target.value)
-                      }
-                    />
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold ${schedule.ativo ? 'bg-gradient-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      {DIAS_SEMANA[schedule.dia_semana].short}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {DIAS_SEMANA[schedule.dia_semana].nome}
+                      </h3>
+                      {schedule.ativo && (
+                        <p className="text-sm text-muted-foreground">
+                          {schedule.hora_inicio} - {schedule.hora_fim}
+                          {schedule.intervalo_inicio && schedule.intervalo_fim && 
+                            ` (Intervalo: ${schedule.intervalo_inicio} - ${schedule.intervalo_fim})`
+                          }
+                        </p>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor={`fim-${schedule.dia_semana}`}>
-                      Hora de Fim *
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`ativo-${schedule.dia_semana}`} className="text-sm font-medium">
+                      {schedule.ativo ? 'Aberto' : 'Fechado'}
                     </Label>
-                    <Input
-                      id={`fim-${schedule.dia_semana}`}
-                      type="time"
-                      value={schedule.hora_fim}
-                      onChange={(e) =>
-                        handleUpdate(schedule.dia_semana, "hora_fim", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor={`int-inicio-${schedule.dia_semana}`}>
-                      Início do Intervalo (Opcional)
-                    </Label>
-                    <Input
-                      id={`int-inicio-${schedule.dia_semana}`}
-                      type="time"
-                      value={schedule.intervalo_inicio}
-                      onChange={(e) =>
-                        handleUpdate(
-                          schedule.dia_semana,
-                          "intervalo_inicio",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor={`int-fim-${schedule.dia_semana}`}>
-                      Fim do Intervalo (Opcional)
-                    </Label>
-                    <Input
-                      id={`int-fim-${schedule.dia_semana}`}
-                      type="time"
-                      value={schedule.intervalo_fim}
-                      onChange={(e) =>
-                        handleUpdate(schedule.dia_semana, "intervalo_fim", e.target.value)
+                    <Switch
+                      id={`ativo-${schedule.dia_semana}`}
+                      checked={schedule.ativo}
+                      onCheckedChange={(checked) =>
+                        handleUpdate(schedule.dia_semana, "ativo", checked)
                       }
                     />
                   </div>
                 </div>
-              )}
-            </div>
+
+                {schedule.ativo && (
+                  <div className="space-y-3 pt-3 border-t">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor={`inicio-${schedule.dia_semana}`} className="text-xs font-medium flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Abertura *
+                        </Label>
+                        <Input
+                          id={`inicio-${schedule.dia_semana}`}
+                          type="time"
+                          value={schedule.hora_inicio}
+                          onChange={(e) =>
+                            handleUpdate(schedule.dia_semana, "hora_inicio", e.target.value)
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`fim-${schedule.dia_semana}`} className="text-xs font-medium flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Fechamento *
+                        </Label>
+                        <Input
+                          id={`fim-${schedule.dia_semana}`}
+                          type="time"
+                          value={schedule.hora_fim}
+                          onChange={(e) =>
+                            handleUpdate(schedule.dia_semana, "hora_fim", e.target.value)
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed">
+                      <div className="space-y-2">
+                        <Label htmlFor={`int-inicio-${schedule.dia_semana}`} className="text-xs font-medium text-muted-foreground">
+                          Início do Intervalo (opcional)
+                        </Label>
+                        <Input
+                          id={`int-inicio-${schedule.dia_semana}`}
+                          type="time"
+                          value={schedule.intervalo_inicio}
+                          onChange={(e) =>
+                            handleUpdate(
+                              schedule.dia_semana,
+                              "intervalo_inicio",
+                              e.target.value
+                            )
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`int-fim-${schedule.dia_semana}`} className="text-xs font-medium text-muted-foreground">
+                          Fim do Intervalo (opcional)
+                        </Label>
+                        <Input
+                          id={`int-fim-${schedule.dia_semana}`}
+                          type="time"
+                          value={schedule.intervalo_fim}
+                          onChange={(e) =>
+                            handleUpdate(schedule.dia_semana, "intervalo_fim", e.target.value)
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button onClick={handleSave} disabled={loading}>
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertCircle className="w-4 h-4" />
+            <span>Configure os horários de cada dia e salve as alterações</span>
+          </div>
+          <Button onClick={handleSave} disabled={loading} size="lg" variant="hero">
             <Save className="w-4 h-4 mr-2" />
             Salvar Horários
           </Button>

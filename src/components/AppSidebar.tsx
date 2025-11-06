@@ -74,7 +74,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-border/50">
         <div className="flex flex-col gap-3 px-3 py-4">
           <div className="flex items-center gap-3">
-            <img src={winixLogo} alt="Winix" className="w-10 h-10" />
+            <img src={winixLogo} alt="Winix" className={isCollapsed ? "w-8 h-8" : "w-10 h-10"} />
             {!isCollapsed && (
               <div>
                 <h2 className="font-bold text-lg text-primary">Winix</h2>

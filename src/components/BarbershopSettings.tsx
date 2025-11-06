@@ -226,36 +226,6 @@ const BarbershopSettings = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Dias de Funcionamento</Label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: "1", label: "Seg" },
-                { value: "2", label: "Ter" },
-                { value: "3", label: "Qua" },
-                { value: "4", label: "Qui" },
-                { value: "5", label: "Sex" },
-                { value: "6", label: "Sáb" },
-                { value: "0", label: "Dom" }
-              ].map((day) => (
-                <Button
-                  key={day.value}
-                  type="button"
-                  variant={formData.dias_funcionamento.includes(day.value) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    const dias = formData.dias_funcionamento.includes(day.value)
-                      ? formData.dias_funcionamento.filter(d => d !== day.value)
-                      : [...formData.dias_funcionamento, day.value];
-                    setFormData(prev => ({ ...prev, dias_funcionamento: dias }));
-                  }}
-                >
-                  {day.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
           {barbershop?.id && (
             <>
               <div className="space-y-4 border-t pt-6">
@@ -270,14 +240,6 @@ const BarbershopSettings = () => {
                   label="Logo da Barbearia"
                   barbershopId={barbershop.id}
                   folder="logo"
-                />
-                
-                <ImageUpload
-                  currentImageUrl={formData.foto_perfil_url}
-                  onImageUpload={(url) => setFormData(prev => ({ ...prev, foto_perfil_url: url }))}
-                  label="Foto de Perfil"
-                  barbershopId={barbershop.id}
-                  folder="perfil"
                 />
                 
                 <div className="space-y-2">
@@ -299,7 +261,7 @@ const BarbershopSettings = () => {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Esta cor será aplicada no fundo da sua página de agendamento público
+                    Esta cor será aplicada como tema principal da página de agendamento
                   </p>
                 </div>
               </div>

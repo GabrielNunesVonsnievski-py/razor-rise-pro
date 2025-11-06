@@ -120,7 +120,6 @@ const Clients = () => {
                 <p className="text-sm text-muted-foreground">Gerencie seus clientes</p>
               </div>
             </div>
-            <UserHeader />
           </header>
 
           <div className="p-6 space-y-6">

@@ -125,7 +125,6 @@ const Financial = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <UserHeader />
               <Button variant="outline" size="sm" onClick={handleGenerateReport}>
                 <FileText className="w-4 h-4" />
                 Gerar Relatório PDF
