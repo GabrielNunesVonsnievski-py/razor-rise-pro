@@ -297,6 +297,7 @@ export type Database = {
         Row: {
           appointment_id: string | null
           barbershop_id: number
+          categoria: string | null
           data_registro: string | null
           descricao: string | null
           id: number
@@ -307,6 +308,7 @@ export type Database = {
         Insert: {
           appointment_id?: string | null
           barbershop_id: number
+          categoria?: string | null
           data_registro?: string | null
           descricao?: string | null
           id?: number
@@ -317,6 +319,7 @@ export type Database = {
         Update: {
           appointment_id?: string | null
           barbershop_id?: number
+          categoria?: string | null
           data_registro?: string | null
           descricao?: string | null
           id?: number
