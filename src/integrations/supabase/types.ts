@@ -465,6 +465,48 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          charge_number: number | null
+          created_at: string | null
+          customer_id: string | null
+          id: string
+          next_charge_date: string | null
+          plan_name: string
+          plan_type: string
+          status: string
+          subscription_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          charge_number?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          next_charge_date?: string | null
+          plan_name: string
+          plan_type: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          charge_number?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          next_charge_date?: string | null
+          plan_name?: string
+          plan_type?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -485,6 +527,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      webhook_pagamentos: {
+        Row: {
+          created_at: string | null
+          erro: string | null
+          frequencia_cobranca: string | null
+          id: string
+          ip_cliente: string | null
+          nome_plano: string | null
+          numero_cobranca: number | null
+          payload_completo: Json
+          processado: boolean | null
+          processed_at: string | null
+          proxima_data_cobranca: string | null
+          status_pagamento: string | null
+          subscription_id: string | null
+          taxa: number | null
+          tipo_evento: string
+        }
+        Insert: {
+          created_at?: string | null
+          erro?: string | null
+          frequencia_cobranca?: string | null
+          id?: string
+          ip_cliente?: string | null
+          nome_plano?: string | null
+          numero_cobranca?: number | null
+          payload_completo: Json
+          processado?: boolean | null
+          processed_at?: string | null
+          proxima_data_cobranca?: string | null
+          status_pagamento?: string | null
+          subscription_id?: string | null
+          taxa?: number | null
+          tipo_evento: string
+        }
+        Update: {
+          created_at?: string | null
+          erro?: string | null
+          frequencia_cobranca?: string | null
+          id?: string
+          ip_cliente?: string | null
+          nome_plano?: string | null
+          numero_cobranca?: number | null
+          payload_completo?: Json
+          processado?: boolean | null
+          processed_at?: string | null
+          proxima_data_cobranca?: string | null
+          status_pagamento?: string | null
+          subscription_id?: string | null
+          taxa?: number | null
+          tipo_evento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_pagamentos_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
