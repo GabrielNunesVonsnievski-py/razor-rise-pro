@@ -44,14 +44,42 @@ const LandingPage = () => {
             O Winix é o seu novo assistente digital — simples, rápido e feito sob medida para barbeiros.
           </p>
           
-          <Button 
-            size="lg" 
-            className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
-            onClick={() => navigate('/auth')}
-          >
-            <Sparkles className="mr-2 h-6 w-6" />
-            COMEÇAR AGORA COM WINIX
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <a 
+              href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button 
+                size="lg" 
+                className="bg-accent hover:bg-accent/90 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all min-w-[280px]"
+              >
+                <DollarSign className="mr-2 h-6 w-6" />
+                Plano Mensal - R$ 74,90
+              </Button>
+            </a>
+            
+            <a 
+              href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all min-w-[280px] relative"
+              >
+                <Badge className="absolute -top-3 -right-3 bg-green-500 text-white border-none">
+                  Economize 33%
+                </Badge>
+                <Sparkles className="mr-2 h-6 w-6" />
+                Plano Trimestral - R$ 149,90
+              </Button>
+            </a>
+          </div>
+          
+          <p className="text-sm opacity-70 mt-6">
+            Plano trimestral sai por apenas <strong className="text-accent">R$ 49,96/mês</strong> — a melhor opção!
+          </p>
         </div>
       </section>
 
@@ -80,14 +108,19 @@ const LandingPage = () => {
             <p className="text-2xl font-bold mb-6 text-foreground">
               A boa notícia é que <span className="text-accent">dá pra resolver tudo isso com o Winix.</span>
             </p>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-accent text-accent hover:bg-accent hover:text-white px-10 py-6 text-lg font-bold"
-              onClick={() => navigate('/auth')}
+            <a 
+              href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              CONHEÇA O WINIX
-            </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-accent text-accent hover:bg-accent hover:text-white px-10 py-6 text-lg font-bold"
+              >
+                COMEÇAR COM WINIX
+              </Button>
+            </a>
           </div>
         </div>
       </section>
@@ -145,14 +178,35 @@ const LandingPage = () => {
           </div>
           
           <div className="text-center mt-12">
-            <Button 
-              size="lg"
-              className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
-              onClick={() => navigate('/auth')}
-            >
-              <Zap className="mr-2 h-6 w-6" />
-              EXPERIMENTAR AGORA
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <a 
+                href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button 
+                  size="lg"
+                  className="bg-accent hover:bg-accent/90 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all"
+                >
+                  <DollarSign className="mr-2 h-6 w-6" />
+                  Mensal - R$ 74,90
+                </Button>
+              </a>
+              
+              <a 
+                href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all"
+                >
+                  <Sparkles className="mr-2 h-6 w-6" />
+                  Trimestral - R$ 149,90
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -246,17 +300,41 @@ const LandingPage = () => {
             Comece agora e veja seus resultados crescerem em <strong>poucos dias.</strong>
           </p>
           
-          <Button 
-            size="lg"
-            className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
-            onClick={() => navigate('/auth')}
-          >
-            <Shield className="mr-2 h-6 w-6" />
-            CRIAR MINHA CONTA GRÁTIS
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
+            <a 
+              href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button 
+                size="lg"
+                className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all min-w-[280px]"
+              >
+                <DollarSign className="mr-2 h-6 w-6" />
+                Mensal - R$ 74,90
+              </Button>
+            </a>
+            
+            <a 
+              href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button 
+                size="lg"
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all min-w-[280px] relative"
+              >
+                <Badge className="absolute -top-3 -right-3 bg-background text-accent border-none font-bold">
+                  MELHOR VALOR
+                </Badge>
+                <Sparkles className="mr-2 h-6 w-6" />
+                Trimestral - R$ 149,90
+              </Button>
+            </a>
+          </div>
           
-          <p className="text-sm opacity-60 mt-6">
-            Sem cartão de crédito. Sem compromisso. Comece em menos de 2 minutos.
+          <p className="text-sm opacity-60">
+            Pagamento único. Acesso imediato. Suporte dedicado incluído.
           </p>
         </div>
       </section>

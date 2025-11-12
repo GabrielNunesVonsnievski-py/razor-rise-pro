@@ -17,35 +17,41 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    console.log('Webhook Asaas recebido');
+    console.log('Webhook Kirvano recebido');
     
     const payload = await req.json();
     console.log('Payload completo:', JSON.stringify(payload, null, 2));
 
-    // Extrair dados do webhook
+    // Extrair dados do webhook da Kirvano
     const {
       ip,
       fee,
+      utm,
       plan,
       type,
       payment,
       subscription,
       customer,
-      event
+      event,
+      status,
+      transaction_id,
+      amount,
+      paid_at,
+      expires_at
     } = payload;
 
     // Determinar o tipo de evento
     const tipoEvento = event || type || 'UNKNOWN';
-    const statusPagamento = payment?.status || null;
+    const statusPagamento = payment?.status || status || null;
 
     // Preparar dados para inserção
     const webhookData: any = {
       ip_cliente: ip || null,
       taxa: fee || null,
       nome_plano: plan?.name || null,
-      frequencia_cobranca: plan?.charge_frequency || null,
-      numero_cobranca: plan?.charge_number || null,
-      proxima_data_cobranca: plan?.next_charge_date || null,
+      frequencia_cobranca: plan?.charge_frequency || (plan?.name?.toLowerCase().includes('trimestral') ? 'QUARTERLY' : 'MONTHLY'),
+      numero_cobranca: plan?.charge_number || 1,
+      proxima_data_cobranca: plan?.next_charge_date || expires_at || null,
       tipo_evento: tipoEvento,
       status_pagamento: statusPagamento,
       payload_completo: payload,
@@ -69,31 +75,52 @@ serve(async (req) => {
     // Processar o evento baseado no tipo
     let subscriptionUpdated = false;
 
-    if (tipoEvento === 'PAYMENT_RECEIVED' || tipoEvento === 'RECURRING') {
+    // Identificar o cliente através do email ou customer ID
+    const customerEmail = customer?.email || payment?.customer?.email || null;
+    const customerId = customer?.id || transaction_id || null;
+    const subscriptionId = subscription?.id || transaction_id || null;
+
+    if (tipoEvento === 'PAYMENT_RECEIVED' || tipoEvento === 'RECURRING' || tipoEvento === 'payment.approved' || statusPagamento === 'approved') {
       // Pagamento confirmado - ativar ou atualizar assinatura
-      const customerId = customer?.id || subscription?.customer || null;
-      const subscriptionId = subscription?.id || null;
       
-      if (customerId) {
-        console.log('Processando pagamento confirmado para customer:', customerId);
+      if (customerEmail || customerId) {
+        console.log('Processando pagamento confirmado para:', customerEmail || customerId);
 
         // Calcular próxima data de cobrança
         let nextChargeDate: Date | null = null;
+        const planName = plan?.name || '';
+        
         if (plan?.next_charge_date) {
           nextChargeDate = new Date(plan.next_charge_date);
-        } else if (plan?.charge_frequency === 'MONTHLY') {
-          nextChargeDate = new Date();
-          nextChargeDate.setMonth(nextChargeDate.getMonth() + 1);
-        } else if (plan?.charge_frequency === 'QUARTERLY') {
+        } else if (expires_at) {
+          nextChargeDate = new Date(expires_at);
+        } else if (planName.toLowerCase().includes('trimestral') || plan?.charge_frequency === 'QUARTERLY') {
           nextChargeDate = new Date();
           nextChargeDate.setMonth(nextChargeDate.getMonth() + 3);
+        } else {
+          // Mensal por padrão
+          nextChargeDate = new Date();
+          nextChargeDate.setMonth(nextChargeDate.getMonth() + 1);
+        }
+
+        // Buscar usuário pelo email ou customer_id
+        let userId = null;
+        
+        if (customerEmail) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('email', customerEmail)
+            .maybeSingle();
+          
+          userId = profile?.user_id;
         }
 
         // Tentar atualizar assinatura existente
         const { data: existingSub, error: findError } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('customer_id', customerId)
+          .or(`customer_id.eq.${customerId},user_id.eq.${userId}`)
           .maybeSingle();
 
         if (existingSub) {
@@ -103,9 +130,10 @@ serve(async (req) => {
             .update({
               status: 'active',
               subscription_id: subscriptionId || existingSub.subscription_id,
+              customer_id: customerId || existingSub.customer_id,
               plan_name: plan?.name || existingSub.plan_name,
               plan_type: plan?.charge_frequency || existingSub.plan_type,
-              charge_number: plan?.charge_number || existingSub.charge_number,
+              charge_number: (existingSub.charge_number || 0) + 1,
               next_charge_date: nextChargeDate?.toISOString() || existingSub.next_charge_date,
               updated_at: new Date().toISOString(),
             })
@@ -127,21 +155,52 @@ serve(async (req) => {
               })
               .eq('id', webhookRecord.id);
           }
+        } else if (userId) {
+          // Criar nova assinatura
+          const { data: newSub, error: createError } = await supabase
+            .from('subscriptions')
+            .insert({
+              user_id: userId,
+              customer_id: customerId,
+              subscription_id: subscriptionId,
+              plan_name: plan?.name || 'Plano Mensal',
+              plan_type: plan?.charge_frequency || 'MONTHLY',
+              status: 'active',
+              charge_number: 1,
+              next_charge_date: nextChargeDate?.toISOString(),
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Erro ao criar assinatura:', createError);
+          } else {
+            console.log('Nova assinatura criada:', newSub.id);
+            subscriptionUpdated = true;
+
+            await supabase
+              .from('webhook_pagamentos')
+              .update({
+                processado: true,
+                processed_at: new Date().toISOString(),
+                subscription_id: newSub.id,
+              })
+              .eq('id', webhookRecord.id);
+          }
         } else {
-          console.log('Assinatura não encontrada para customer_id:', customerId);
+          console.log('Usuário não encontrado para email:', customerEmail);
         }
       }
-    } else if (tipoEvento === 'PAYMENT_CANCELED' || tipoEvento === 'SUBSCRIPTION_CANCELED') {
+    } else if (tipoEvento === 'PAYMENT_CANCELED' || tipoEvento === 'SUBSCRIPTION_CANCELED' || tipoEvento === 'payment.cancelled' || statusPagamento === 'cancelled') {
       // Pagamento cancelado - cancelar assinatura
-      const customerId = customer?.id || subscription?.customer || null;
       
-      if (customerId) {
-        console.log('Processando cancelamento para customer:', customerId);
+      if (customerEmail || customerId) {
+        console.log('Processando cancelamento para:', customerEmail || customerId);
 
-        const { data: existingSub, error: findError } = await supabase
+        const { data: existingSub } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('customer_id', customerId)
+          .or(`customer_id.eq.${customerId}${customerEmail ? `,user_id.in.(select user_id from profiles where email='${customerEmail}')` : ''}`)
           .maybeSingle();
 
         if (existingSub) {
@@ -170,17 +229,16 @@ serve(async (req) => {
           }
         }
       }
-    } else if (tipoEvento === 'SUBSCRIPTION_EXPIRED') {
+    } else if (tipoEvento === 'SUBSCRIPTION_EXPIRED' || tipoEvento === 'subscription.expired') {
       // Assinatura expirada
-      const customerId = customer?.id || subscription?.customer || null;
       
-      if (customerId) {
-        console.log('Processando expiração para customer:', customerId);
+      if (customerEmail || customerId) {
+        console.log('Processando expiração para:', customerEmail || customerId);
 
-        const { data: existingSub, error: findError } = await supabase
+        const { data: existingSub } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('customer_id', customerId)
+          .or(`customer_id.eq.${customerId}${customerEmail ? `,user_id.in.(select user_id from profiles where email='${customerEmail}')` : ''}`)
           .maybeSingle();
 
         if (existingSub) {

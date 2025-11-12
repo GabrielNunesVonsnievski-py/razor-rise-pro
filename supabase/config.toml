@@ -6,5 +6,5 @@ verify_jwt = false
 [functions.email-test]
 verify_jwt = true
 
-[functions.webhook-asaas]
+[functions.webhook-kirvano]
 verify_jwt = false
