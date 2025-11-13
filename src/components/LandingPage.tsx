@@ -262,7 +262,7 @@ const LandingPage = () => {
                 </ul>
 
                 <a 
-                  href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+                  href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
@@ -315,7 +315,7 @@ const LandingPage = () => {
                 </ul>
 
                 <a 
-                  href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
+                  href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
