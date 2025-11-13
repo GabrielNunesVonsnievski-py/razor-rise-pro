@@ -20,6 +20,11 @@ import { useNavigate } from "react-router-dom";
 const LandingPage = () => {
   const navigate = useNavigate();
 
+  const scrollToPlans = () => {
+    const plansSection = document.getElementById('plans-section');
+    plansSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -44,42 +49,13 @@ const LandingPage = () => {
             O Winix é o seu novo assistente digital — simples, rápido e feito sob medida para barbeiros.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <a 
-              href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button 
-                size="lg" 
-                className="bg-accent hover:bg-accent/90 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all min-w-[280px]"
-              >
-                <DollarSign className="mr-2 h-6 w-6" />
-                Plano Mensal - R$ 74,90
-              </Button>
-            </a>
-            
-            <a 
-              href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all min-w-[280px] relative"
-              >
-                <Badge className="absolute -top-3 -right-3 bg-green-500 text-white border-none">
-                  Economize 33%
-                </Badge>
-                <Sparkles className="mr-2 h-6 w-6" />
-                Plano Trimestral - R$ 149,90
-              </Button>
-            </a>
-          </div>
-          
-          <p className="text-sm opacity-70 mt-6">
-            Plano trimestral sai por apenas <strong className="text-accent">R$ 49,96/mês</strong> — a melhor opção!
-          </p>
+          <Button 
+            size="lg"
+            onClick={scrollToPlans}
+            className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
+          >
+            Ver Planos
+          </Button>
         </div>
       </section>
 
@@ -177,37 +153,6 @@ const LandingPage = () => {
             ))}
           </div>
           
-          <div className="text-center mt-12">
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <a 
-                href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button 
-                  size="lg"
-                  className="bg-accent hover:bg-accent/90 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all"
-                >
-                  <DollarSign className="mr-2 h-6 w-6" />
-                  Mensal - R$ 74,90
-                </Button>
-              </a>
-              
-              <a 
-                href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button 
-                  size="lg"
-                  className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 text-white px-10 py-6 text-lg font-bold shadow-glow hover:scale-105 transition-all"
-                >
-                  <Sparkles className="mr-2 h-6 w-6" />
-                  Trimestral - R$ 149,90
-                </Button>
-              </a>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -287,6 +232,124 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Plans Section */}
+      <section id="plans-section" className="py-20 px-6 bg-secondary/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Escolha o plano ideal para <span className="text-accent">sua barbearia</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Simples, transparente e sem surpresas
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Plano Mensal */}
+            <Card className="relative border-2 hover:border-accent/50 transition-all hover:shadow-glow">
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">Plano Mensal</h3>
+                  <div className="flex items-baseline justify-center gap-2 mb-4">
+                    <span className="text-5xl font-bold text-accent">R$ 74,90</span>
+                    <span className="text-muted-foreground">/mês</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Flexibilidade total, cancele quando quiser
+                  </p>
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  {[
+                    "Agendamentos ilimitados",
+                    "Gestão de barbeiros",
+                    "Painel financeiro completo",
+                    "Lembretes automáticos",
+                    "Suporte dedicado"
+                  ].map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                      <span className="text-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a 
+                  href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button 
+                    size="lg"
+                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold"
+                  >
+                    Assinar Agora
+                  </Button>
+                </a>
+              </CardContent>
+            </Card>
+
+            {/* Plano Trimestral */}
+            <Card className="relative border-2 border-accent shadow-glow">
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white border-none px-4 py-1">
+                MAIS POPULAR
+              </Badge>
+              
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">Plano Trimestral</h3>
+                  <div className="flex items-baseline justify-center gap-2 mb-2">
+                    <span className="text-5xl font-bold text-accent">R$ 149,90</span>
+                    <span className="text-muted-foreground">/trimestre</span>
+                  </div>
+                  <p className="text-sm font-semibold text-accent mb-2">
+                    Apenas R$ 49,96/mês
+                  </p>
+                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                    Economize 33%
+                  </Badge>
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  {[
+                    "Agendamentos ilimitados",
+                    "Gestão de barbeiros",
+                    "Painel financeiro completo",
+                    "Lembretes automáticos",
+                    "Suporte dedicado",
+                    "Melhor custo-benefício"
+                  ].map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                      <span className="text-foreground font-medium">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a 
+                  href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button 
+                    size="lg"
+                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold shadow-glow"
+                  >
+                    Assinar Agora
+                  </Button>
+                </a>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            Pagamento seguro • Acesso imediato • Cancele quando quiser
+          </p>
+        </div>
+      </section>
+
       {/* CTA Final */}
       <section className="py-20 px-6 bg-foreground text-background">
         <div className="max-w-4xl mx-auto text-center">
@@ -300,42 +363,13 @@ const LandingPage = () => {
             Comece agora e veja seus resultados crescerem em <strong>poucos dias.</strong>
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
-            <a 
-              href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button 
-                size="lg"
-                className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all min-w-[280px]"
-              >
-                <DollarSign className="mr-2 h-6 w-6" />
-                Mensal - R$ 74,90
-              </Button>
-            </a>
-            
-            <a 
-              href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button 
-                size="lg"
-                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all min-w-[280px] relative"
-              >
-                <Badge className="absolute -top-3 -right-3 bg-background text-accent border-none font-bold">
-                  MELHOR VALOR
-                </Badge>
-                <Sparkles className="mr-2 h-6 w-6" />
-                Trimestral - R$ 149,90
-              </Button>
-            </a>
-          </div>
-          
-          <p className="text-sm opacity-60">
-            Pagamento único. Acesso imediato. Suporte dedicado incluído.
-          </p>
+          <Button 
+            size="lg"
+            onClick={scrollToPlans}
+            className="bg-accent hover:bg-accent/90 text-white px-12 py-6 text-xl font-bold shadow-glow hover:scale-105 transition-all"
+          >
+            Ver Planos
+          </Button>
         </div>
       </section>
     </div>
