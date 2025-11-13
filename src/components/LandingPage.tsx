@@ -81,22 +81,9 @@ const LandingPage = () => {
           </div>
           
           <div className="text-center">
-            <p className="text-2xl font-bold mb-6 text-foreground">
+            <p className="text-2xl font-bold text-foreground">
               A boa notícia é que <span className="text-accent">dá pra resolver tudo isso com o Winix.</span>
             </p>
-            <a 
-              href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="border-accent text-accent hover:bg-accent hover:text-white px-10 py-6 text-lg font-bold"
-              >
-                COMEÇAR COM WINIX
-              </Button>
-            </a>
           </div>
         </div>
       </section>
@@ -246,7 +233,7 @@ const LandingPage = () => {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Plano Mensal */}
-            <Card className="relative border-2 hover:border-accent/50 transition-all hover:shadow-glow">
+            <Card className="relative border-2 hover:border-accent/50 transition-all hover:shadow-glow animate-fade-in hover-scale">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold mb-2">Plano Mensal</h3>
@@ -275,14 +262,14 @@ const LandingPage = () => {
                 </ul>
 
                 <a 
-                  href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
+                  href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
                 >
                   <Button 
                     size="lg"
-                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold"
+                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold transition-all"
                   >
                     Assinar Agora
                   </Button>
@@ -291,8 +278,8 @@ const LandingPage = () => {
             </Card>
 
             {/* Plano Trimestral */}
-            <Card className="relative border-2 border-accent shadow-glow">
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white border-none px-4 py-1">
+            <Card className="relative border-2 border-accent shadow-glow animate-fade-in hover-scale" style={{ animationDelay: '0.1s' }}>
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white border-none px-4 py-1 animate-pulse">
                 MAIS POPULAR
               </Badge>
               
@@ -328,14 +315,14 @@ const LandingPage = () => {
                 </ul>
 
                 <a 
-                  href="https://pay.kirvano.com/cfef8cc5-042d-4a78-bade-0f4fd59fa92b"
+                  href="https://pay.kirvano.com/e9a13824-b88a-4012-a111-349a64b02194"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
                 >
                   <Button 
                     size="lg"
-                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold shadow-glow"
+                    className="w-full bg-accent hover:bg-accent/90 text-white font-bold shadow-glow transition-all"
                   >
                     Assinar Agora
                   </Button>
