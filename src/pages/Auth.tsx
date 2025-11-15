@@ -24,6 +24,20 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Ler parâmetros da URL e pré-preencher campos
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const nomeParam = urlParams.get('nome');
+    const emailParam = urlParams.get('email');
+    
+    if (nomeParam) {
+      setFullName(decodeURIComponent(nomeParam));
+    }
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam));
+    }
+  }, []);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

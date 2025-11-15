@@ -103,8 +103,9 @@ serve(async (req) => {
           nextChargeDate.setMonth(nextChargeDate.getMonth() + 1);
         }
 
-        // Buscar usuário pelo email ou customer_id
+        // Buscar ou criar usuário pelo email
         let userId = null;
+        const customerName = customer?.name || payload?.buyer?.name || 'Novo Cliente';
         
         if (customerEmail) {
           const { data: profile } = await supabase
@@ -113,7 +114,96 @@ serve(async (req) => {
             .eq('email', customerEmail)
             .maybeSingle();
           
-          userId = profile?.user_id;
+          if (profile) {
+            userId = profile.user_id;
+            console.log('Usuário já existe:', userId);
+          } else {
+            // Usuário não existe - criar novo
+            console.log('Criando novo usuário para:', customerEmail);
+            
+            // Gerar senha temporária aleatória
+            const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12).toUpperCase() + '!@#';
+            
+            // Criar usuário no Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+              email: customerEmail,
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                full_name: customerName,
+              }
+            });
+
+            if (authError) {
+              console.error('Erro ao criar usuário:', authError);
+              throw new Error(`Erro ao criar usuário: ${authError.message}`);
+            }
+
+            userId = authData.user.id;
+            console.log('Novo usuário criado:', userId);
+
+            // Criar perfil
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                user_id: userId,
+                email: customerEmail,
+                full_name: customerName,
+              });
+
+            if (profileError) {
+              console.error('Erro ao criar perfil:', profileError);
+            }
+
+            // Enviar e-mail de boas-vindas
+            try {
+              const emailHtml = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                  <div style="background-color: #ffffff; border-radius: 10px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h1 style="color: #ff6b35; margin-bottom: 20px;">Bem-vindo ao Winix! 🎉</h1>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Olá <strong>${customerName}</strong>,</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Seu pagamento foi confirmado com sucesso! Sua conta já está ativa e pronta para uso.</p>
+                    
+                    <div style="background-color: #fff3f0; border-left: 4px solid #ff6b35; padding: 15px; margin: 20px 0;">
+                      <h3 style="color: #ff6b35; margin-top: 0;">Seus dados de acesso:</h3>
+                      <p style="color: #333; margin: 5px 0;"><strong>Email:</strong> ${customerEmail}</p>
+                      <p style="color: #333; margin: 5px 0;"><strong>Senha temporária:</strong> <code style="background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 14px;">${tempPassword}</code></p>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">⚠️ Por segurança, recomendamos que você altere sua senha após o primeiro login.</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="https://winix-five.vercel.app/auth" 
+                         style="display: inline-block; background-color: #ff6b35; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        Fazer Login
+                      </a>
+                    </div>
+                    
+                    <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                      Se você não realizou esta compra, entre em contato conosco imediatamente.
+                    </p>
+                  </div>
+                </div>
+              `;
+
+              const { error: emailError } = await supabase.functions.invoke('send-email', {
+                body: {
+                  to: customerEmail,
+                  subject: 'Bem-vindo ao Winix - Seus Dados de Acesso',
+                  html: emailHtml,
+                  isTest: false,
+                }
+              });
+
+              if (emailError) {
+                console.error('Erro ao enviar e-mail:', emailError);
+              } else {
+                console.log('E-mail de boas-vindas enviado para:', customerEmail);
+              }
+            } catch (emailErr) {
+              console.error('Erro ao processar e-mail:', emailErr);
+            }
+          }
         }
 
         // Tentar atualizar assinatura existente
